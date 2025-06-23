@@ -24,10 +24,11 @@ Game::~Game()
 void Game::Draw()
 {
     playership.Draw();
-    for ( auto& word : wordships )
+    for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
-        word.Draw();
+        wordships[i].Draw(i == target_idx);
     }
+
     for ( auto& bullet : playership.bullets )
     {
         bullet.Draw();
@@ -156,7 +157,7 @@ void Game::InitGame()
 std::vector<WordShip> Game::CreateWordships()
 {
     std::vector<WordShip> words;
-    int numberOfShips = level * 5;
+    int numberOfShips = level * 10;
     for ( int i = 0; i < numberOfShips; i++ )
     {
         int idx = GetRandomValue(0, smallerwords.size() - 1);
@@ -173,7 +174,8 @@ Vector2 Game::getPosition(string word)
     while ( attempts-- )
     {
         bool ok = true;
-        float posX = GetRandomValue(0, GetScreenWidth() / 2);
+        float wordWidth = MeasureTextEx(font, word.c_str(), 30, 2).x;
+        float posX = GetRandomValue(0, GetScreenWidth() - ( int )wordWidth);
         float posY = GetRandomValue(0, GetScreenHeight() / 2);
         float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
         float height = 30.0;

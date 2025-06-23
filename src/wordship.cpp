@@ -39,12 +39,23 @@ WordShip::~WordShip()
 
 }
 
-void WordShip::Draw()
+void WordShip::Draw(bool isTarget)
 {
-    if ( alive )
+    if ( !alive )return;
+    float fontSize = 30;
+    float spacing = 2;
+    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
+
+    if ( isTarget )
     {
-        DrawTextEx(font, word.c_str(), { position.x, position.y }, 30, 2, YELLOW);
+        DrawRectangleV(position, { textSize.x,textSize.y }, Fade(YELLOW, 0.3f));
+        DrawTextEx(font, word.c_str(), position, fontSize, spacing, YELLOW);
     }
+    else
+    {
+        DrawTextEx(font, word.c_str(), position, fontSize, spacing, WHITE);
+    }
+
 }
 
 void WordShip::Move()

@@ -8,7 +8,7 @@ class WordShip
     WordShip();
     WordShip(Font f, Vector2 position, std::string word);
     ~WordShip();
-    void Draw();
+    void Draw(bool isTarget);
     void Move();
     Rectangle GetRect();
     std::string word;
