@@ -15,6 +15,7 @@ class Game
     void Update();
     void HandleInput();
     void InitGame();
+    void HandleTyping();
     vector<WordShip>CreateWordships();
     Vector2 getPosition(string word);
     bool isRunning;
@@ -22,10 +23,14 @@ class Game
     int highScore;
     int lives;
     int level;
+    int target_idx;
     Music music;
     Font font;
 
     private:
+    void DeleteInactiveBullets();
+    void DeleteInactiveWordShips();
+    int GetTargetWordIdx(char c);
     vector<WordShip>wordships;
     PlayerShip playership;
     WordShip wordship;

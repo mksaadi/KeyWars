@@ -1,6 +1,7 @@
 #include "game.hpp"
 #include <string>
 #include "bullet.hpp"
+#include <iostream> 
 using namespace std;
 
 vector<string>smallerwords =
@@ -44,12 +45,100 @@ void Game::Update()
     {
         bullet.Update();
     }
+    HandleTyping();
+    DeleteInactiveBullets();
+    DeleteInactiveWordShips();
+}
+
+void Game::HandleTyping()
+{
+    char typed = playership.Fire();
+    if ( typed == '\0' )return;
+    if ( wordships.empty() )
+    {
+        std::cout << "Level Completed\n";
+        return;
+    }
+    if ( target_idx == -1 && !wordships[target_idx].alive )
+    {
+        target_idx = -1;
+    }
+    if ( target_idx == -1 )
+    {
+        target_idx = GetTargetWordIdx(typed);
+        if ( target_idx != -1 )
+        {
+            if ( wordships[target_idx].word[0] == typed )
+            {
+                wordships[target_idx].word.erase(wordships[target_idx].word.begin());
+                if ( wordships[target_idx].word .size() == 0 )
+                {
+                    wordships[target_idx].alive = false;
+                    target_idx = -1;
+                }
+            }
+        }
+    }
+    else
+    {
+        if ( wordships[target_idx].word[0] == typed )
+        {
+            wordships[target_idx].word.erase(wordships[target_idx].word.begin());
+            if ( wordships[target_idx].word .size() == 0 )
+            {
+                wordships[target_idx].alive = false;
+                target_idx = -1;
+            }
+        }
+    }
+}
+
+int Game::GetTargetWordIdx(char typed)
+{
+    for ( int i = 0; i < ( int )wordships.size(); i++ )
+    {
+        if ( wordships[i].word[0] == typed )
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void Game::DeleteInactiveBullets()
+{
+
+    auto it = playership.bullets.begin();
+    while ( it != playership.bullets.end() )
+    {
+        if ( !it->active )
+        {
+            it = playership.bullets.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void Game::DeleteInactiveWordShips()
+{
+    auto it = wordships.begin();
+    while ( it != wordships.end() )
+    {
+        if ( !it->alive )
+        {
+            it = wordships.erase(it);
+        }
+        else ++it;
+    }
 }
 
 void Game::HandleInput()
 {
     playership.Move();
-    playership.Fire();
 }
 
 void Game::InitGame()
@@ -59,8 +148,10 @@ void Game::InitGame()
     isRunning = true;
     lives = 3;
     level = 1;
+    target_idx = -1;
     wordships = CreateWordships();
 }
+
 
 std::vector<WordShip> Game::CreateWordships()
 {

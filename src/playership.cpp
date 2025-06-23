@@ -1,5 +1,8 @@
 #include "playership.hpp"
 #include <vector>
+#include<string>
+
+
 
 PlayerShip::PlayerShip()
 {
@@ -9,7 +12,7 @@ PlayerShip::PlayerShip()
     position.x = GetScreenWidth() / 2;
     position.y = GetScreenHeight() - 100;
     lastFireTime = 0.0;
-    cur_target = '.';
+    target_word = "";
 }
 
 PlayerShip::~PlayerShip()
@@ -58,9 +61,15 @@ void PlayerShip::Move()
     }
 }
 
-void PlayerShip::Fire()
+char  PlayerShip::Fire()
 {
+    int key = GetCharPressed();
+    char cur_char = ( char )key;
+    if ( key > 0 && key < 128 )
+    {
+        return cur_char;
+    }
+    return '\0';
 
 }
-
 

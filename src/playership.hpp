@@ -1,5 +1,6 @@
 #pragma once
 #include<vector>
+#include<string>
 #include "raylib.h" 
 #include "bullet.hpp"
 
@@ -11,17 +12,14 @@ class PlayerShip
     ~PlayerShip();
     void Draw();
     void Move();
-    void Fire();
+    char Fire();
     Rectangle GetRect();
-    char FindNextTarget(char cur_char);
-
     std::vector<Bullet>bullets;
-
 
     private:
     Texture2D image;
     Vector2 position;
-    char cur_target;
+    std::string target_word;
     int speed;
     bool alive;
     double lastFireTime;
