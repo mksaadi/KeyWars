@@ -1,17 +1,24 @@
 #include "bullet.hpp"
+#include "raymath.h"
 
-Bullet::Bullet(Vector2 position, int speed)
+Bullet::Bullet(Vector2 position, Vector2 targetPos, float speed)
 {
     this->position = position;
     this->speed = speed;
     active = true;
+
+    Vector2 direction = Vector2Subtract(targetPos, position);
+    direction = Vector2Normalize(direction);
+
+    velocity = Vector2Scale(direction, speed);
 }
 
 void Bullet::Update()
 {
     if ( !active )return;
-    position.y += speed;
-    if ( position.y > GetScreenHeight() - 100 || position.y - 25 < 0 )
+    position = Vector2Add(position, velocity);
+
+    if ( position.y<0 || position.y >GetScreenHeight() || position.x<0 || position.x > GetScreenWidth() )
     {
         active = false;
     }

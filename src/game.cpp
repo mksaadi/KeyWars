@@ -71,6 +71,15 @@ void Game::HandleTyping()
         {
             if ( wordships[target_idx].word[0] == typed )
             {
+                // matched. So fire a bullet towards the wordship
+                Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+
+                float wordWidth = MeasureTextEx(font, wordships[target_idx].word.c_str(), 30, 2).x;
+
+                Vector2 wordCenter = { wordships[target_idx].position.x + wordWidth / 2, wordships[target_idx].position.y + 30 };
+                playership.bullets.push_back(Bullet(shipCenter, wordCenter, 10.0f));
+
+
                 wordships[target_idx].word.erase(wordships[target_idx].word.begin());
                 if ( wordships[target_idx].word .size() == 0 )
                 {
@@ -85,6 +94,14 @@ void Game::HandleTyping()
         if ( wordships[target_idx].word[0] == typed )
         {
             wordships[target_idx].word.erase(wordships[target_idx].word.begin());
+
+            // matched. So fire a bullet towards the wordship
+            Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+
+            float wordWidth = MeasureTextEx(font, wordships[target_idx].word.c_str(), 30, 2).x;
+            Vector2 wordCenter = { wordships[target_idx].position.x + wordWidth / 2, wordships[target_idx].position.y + 30 };
+            playership.bullets.push_back(Bullet(shipCenter, wordCenter, 10.0f));
+
             if ( wordships[target_idx].word .size() == 0 )
             {
                 wordships[target_idx].alive = false;

@@ -15,10 +15,10 @@ class PlayerShip
     char Fire();
     Rectangle GetRect();
     std::vector<Bullet>bullets;
+    Vector2 position;
+    Texture2D image;
 
     private:
-    Texture2D image;
-    Vector2 position;
     std::string target_word;
     int speed;
     bool alive;
