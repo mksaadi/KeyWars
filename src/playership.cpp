@@ -7,6 +7,7 @@
 PlayerShip::PlayerShip()
 {
     image = LoadTexture("assets/spaceship_1.png");
+    LaserSound = LoadSound("Sounds/laser.ogg");
     speed = 3;
     alive = true;
     position.x = GetScreenWidth() / 2;
@@ -18,6 +19,7 @@ PlayerShip::PlayerShip()
 PlayerShip::~PlayerShip()
 {
     UnloadTexture(image);
+    UnloadSound(LaserSound);
 }
 
 void PlayerShip::Draw()

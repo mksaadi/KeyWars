@@ -22,7 +22,7 @@ class PlayerShip
     double lastFireTime;
     std::string target_word;
 
-    private:
     Sound LaserSound;
+    private:
 };
 

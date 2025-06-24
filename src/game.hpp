@@ -2,6 +2,8 @@
 #include"raylib.h"  
 #include"playership.hpp"
 #include"wordship.hpp"  
+#include "explosion.hpp"
+
 #include <vector>
 #include <string>
 using namespace std;
@@ -26,13 +28,17 @@ class Game
     int target_idx;
     Music music;
     Font font;
+    Texture2D explosionTexture;
+    std::vector<Explosion>explosions;
 
     private:
     void CheckCollisions();
     void DeleteInactiveBullets();
+    void DeleteFinishedExplosions();
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);
     vector<WordShip>wordships;
     PlayerShip playership;
     WordShip wordship;
+    Sound explosionSound;
 };

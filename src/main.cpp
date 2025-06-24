@@ -13,7 +13,7 @@ using namespace std;
 int main()
 {
     InitWindow(800, 800, "KeyWars");
-
+    InitAudioDevice();
     SetTargetFPS(60);
     srand(time(NULL));
     // Color background_color = { 29,29,27,255 };
@@ -44,6 +44,7 @@ int main()
     }
 
     CloseWindow();
+    CloseAudioDevice();
     UnloadFont(font);
     UnloadTexture(background);
     return 0;
