@@ -11,6 +11,7 @@ class WordShip
     void Draw(bool isTarget);
     void Move();
     Rectangle GetRect();
+    Vector2 GetCenter();
     std::string word;
     Vector2 position;
     float speed;

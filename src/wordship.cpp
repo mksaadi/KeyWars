@@ -21,7 +21,7 @@ WordShip::WordShip(Font f, Vector2 position, std::string word)
     this->position = position;
     this->word = word;
     alive = true;
-    speed = 0.5;
+    speed = 0.2;
     cur_target = 0;
     font = f;
     horizontalSpeed = GetRandomValue(1, 2);
@@ -79,4 +79,10 @@ Rectangle WordShip::GetRect()
 {
     float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
     return { position.x,position.y,width + 10,50 };
+}
+
+Vector2 WordShip::GetCenter()
+{
+    float wordWidth = MeasureTextEx(font, word.c_str(), 30, 2).x;
+    return { position.x + wordWidth / 2, position.y + 15 };
 }

@@ -30,7 +30,7 @@ int main()
         };
     Font font = LoadFont("fonts/FunnelDisplay-VariableFont_wght.ttf");
 
-    
+
     Game game(font);
     while ( !WindowShouldClose() )
     {
