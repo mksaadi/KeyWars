@@ -28,6 +28,7 @@ class Game
     Font font;
 
     private:
+    void CheckCollisions();
     void DeleteInactiveBullets();
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);

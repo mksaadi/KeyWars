@@ -73,3 +73,14 @@ char  PlayerShip::Fire()
 
 }
 
+Rectangle PlayerShip::GetRect()
+{
+    if ( alive )
+    {
+        Rectangle rect = Rectangle { position.x,position.y,image.width,image.height };
+    }
+    else
+    {
+        return { position.x,position.y,0,0 };
+    }
+}

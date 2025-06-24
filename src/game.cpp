@@ -49,6 +49,37 @@ void Game::Update()
     HandleTyping();
     DeleteInactiveBullets();
     DeleteInactiveWordShips();
+    CheckCollisions();
+}
+
+void Game::CheckCollisions()
+{
+    if ( target_idx == -1 )
+    {
+        return;
+    }
+    // bullets vs wordships
+    for ( auto& bullet : playership.bullets )
+    {
+        if ( CheckCollisionRecs(bullet.GetRect(), wordships[target_idx].GetRect()) )
+        {
+            bullet.active = false;
+        }
+    }
+    // wordship vs playership
+
+    for ( auto& wordship : wordships )
+    {
+        if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
+        {
+            playership.alive = false;
+            lives--;
+            if ( lives == 0 )
+            {
+                
+            }
+        }
+    }
 }
 
 void Game::HandleTyping()
@@ -100,7 +131,7 @@ void Game::HandleTyping()
 
             float wordWidth = MeasureTextEx(font, wordships[target_idx].word.c_str(), 30, 2).x;
             Vector2 wordCenter = { wordships[target_idx].position.x + wordWidth / 2, wordships[target_idx].position.y + 30 };
-            playership.bullets.push_back(Bullet(shipCenter, wordCenter, 10.0f));
+            playership.bullets.push_back(Bullet(shipCenter, wordCenter, 20.0f));
 
             if ( wordships[target_idx].word .size() == 0 )
             {
@@ -193,7 +224,7 @@ Vector2 Game::getPosition(string word)
         bool ok = true;
         float wordWidth = MeasureTextEx(font, word.c_str(), 30, 2).x;
         float posX = GetRandomValue(0, GetScreenWidth() - ( int )wordWidth);
-        float posY = GetRandomValue(0, GetScreenHeight() / 2);
+        float posY = GetRandomValue(0, ( GetScreenHeight() / 2 ) - 200);
         float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
         float height = 30.0;
         Rectangle cur_word_rect = Rectangle { posX,posY,width + 10,height + 10 };

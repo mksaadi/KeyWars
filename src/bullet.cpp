@@ -27,7 +27,7 @@ void Bullet::Draw()
 {
     if ( active )
     {
-        DrawRectangle(position.x, position.y, 4, 15, BLUE);
+        DrawCircle(position.x, position.y, 4, RED);
     }
 }
 

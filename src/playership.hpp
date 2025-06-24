@@ -17,12 +17,12 @@ class PlayerShip
     std::vector<Bullet>bullets;
     Vector2 position;
     Texture2D image;
+    bool alive;
+    int speed;
+    double lastFireTime;
+    std::string target_word;
 
     private:
-    std::string target_word;
-    int speed;
-    bool alive;
-    double lastFireTime;
     Sound LaserSound;
 };
 
