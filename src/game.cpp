@@ -168,6 +168,10 @@ int Game::GetTargetWordIdx(char typed)
 {
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
+        if ( wordships[i].word.empty() || !wordships[i].alive )continue;
+        Rectangle rect = wordships[i].GetRect();
+        if ( rect.y + rect.height < 0 )continue;
+
         if ( wordships[i].word[0] == typed )
         {
             return i;
