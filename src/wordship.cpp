@@ -22,6 +22,7 @@ WordShip::WordShip(Font f, Vector2 position, std::string word)
     this->word = word;
     alive = true;
     speed = 0.2;
+    typedCount = 0;
     velocity.x = GetRandomValue(-30, 30) / 100.0f;
     velocity.y = speed;
     cur_target = 0;
@@ -46,17 +47,23 @@ void WordShip::Draw(bool isTarget)
     if ( !alive )return;
     float fontSize = 30;
     float spacing = 2;
-    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
+    Vector2 drawPos = position;
+    std::string typedPart = word.substr(0, typedCount);
+    std::string untypedPart = word.substr(typedCount);
+
 
     if ( isTarget )
     {
-        DrawRectangleV(position, { textSize.x,textSize.y }, Fade(ORANGE, 0.3f));
-        DrawTextEx(font, word.c_str(), position, fontSize, spacing, YELLOW);
+        Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
+        DrawRectangleV(position, { textSize.x, textSize.y }, Fade(ORANGE, 0.3f));
     }
-    else
-    {
-        DrawTextEx(font, word.c_str(), position, fontSize, spacing, WHITE);
-    }
+    DrawTextEx(font, typedPart.c_str(), drawPos, fontSize, spacing, BLACK);
+    // Calculate width of typed part so we can offset untyped part
+    float typedWidth = MeasureTextEx(font, typedPart.c_str(), fontSize, spacing).x;
+    drawPos.x += typedWidth;
+
+    // Draw untyped part
+    DrawTextEx(font, untypedPart.c_str(), drawPos, fontSize, spacing, WHITE);
 
 }
 
@@ -74,7 +81,6 @@ void WordShip::Move()
     {
         velocity.x *= -1;
     }
-
 }
 Rectangle WordShip::GetRect()
 {

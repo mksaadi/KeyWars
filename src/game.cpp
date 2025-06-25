@@ -21,6 +21,7 @@ Game::~Game()
 {
     UnloadFont(font);
     UnloadTexture(explosionTexture);
+    UnloadTexture(impactTexture);
 }
 
 void Game::Draw()
@@ -39,6 +40,10 @@ void Game::Draw()
     {
         explosion.Draw();
     }
+    for ( auto& impact : impacts )
+    {
+        impact.Draw();
+    }
 }
 
 void Game::Update()
@@ -54,6 +59,10 @@ void Game::Update()
     for ( auto& explosion : explosions )
     {
         explosion.Update();
+    }
+    for ( auto& impact : impacts )
+    {
+        impact.Update();
     }
     HandleTyping();
     DeleteInactiveBullets();
@@ -74,6 +83,8 @@ void Game::CheckCollisions()
         if ( CheckCollisionRecs(bullet.GetRect(), wordships[target_idx].GetRect()) )
         {
             bullet.active = false;
+            Vector2 hitPos = bullet.position;
+            impacts.emplace_back(&impactTexture, hitPos);
         }
     }
     // wordship vs playership
@@ -121,14 +132,15 @@ void Game::HandleTyping()
         target_idx = GetTargetWordIdx(typed);
         if ( target_idx != -1 )
         {
-            if ( wordships[target_idx].word[0] == typed )
+            if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
             {
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
                 playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
 
-                wordships[target_idx].word.erase(wordships[target_idx].word.begin());
-                if ( wordships[target_idx].word .size() == 0 )
+                wordships[target_idx].typedCount++;
+
+                if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
                 {
                     // trigger explosion
                     Vector2 explosionPos = wordships[target_idx].GetCenter();
@@ -142,17 +154,17 @@ void Game::HandleTyping()
     }
     else
     {
-        if ( wordships[target_idx].word[0] == typed )
+        if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
         {
             PlaySound(playership.LaserSound);
-            wordships[target_idx].word.erase(wordships[target_idx].word.begin());
+            wordships[target_idx].typedCount++;
 
             // matched. So fire a bullet towards the wordship
 
             Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
             playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
 
-            if ( wordships[target_idx].word .size() == 0 )
+            if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
                 Vector2 explosionPos = wordships[target_idx].GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
@@ -170,7 +182,7 @@ int Game::GetTargetWordIdx(char typed)
     {
         if ( wordships[i].word.empty() || !wordships[i].alive )continue;
         Rectangle rect = wordships[i].GetRect();
-        if ( rect.y + rect.height < 0 )continue;
+        if ( rect.y + rect.height < 10 )continue;
 
         if ( wordships[i].word[0] == typed )
         {
@@ -255,7 +267,9 @@ void Game::InitGame()
     target_idx = -1;
     wordships = CreateWordships();
     explosionTexture = LoadTexture("assets/explosion.png");
+    impactTexture = LoadTexture("assets/explosion-sheet.png");
     explosionSound = LoadSound("Sounds/explosion.ogg");
+
 }
 
 

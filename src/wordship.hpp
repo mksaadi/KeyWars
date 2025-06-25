@@ -18,6 +18,7 @@ class WordShip
     float speed;
     bool alive;
     int cur_target;
+    int typedCount;
     char target_char;
     float horizontalSpeed;
     int horizontalDirection;

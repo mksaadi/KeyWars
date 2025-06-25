@@ -1,11 +1,11 @@
 #pragma once
 #include"raylib.h"  
+#include <vector>
+#include <string>
 #include"playership.hpp"
 #include"wordship.hpp"  
 #include "explosion.hpp"
-
-#include <vector>
-#include <string>
+#include "impact.hpp"
 using namespace std;
 
 class Game
@@ -29,7 +29,9 @@ class Game
     Music music;
     Font font;
     Texture2D explosionTexture;
+    Texture2D impactTexture;
     std::vector<Explosion>explosions;
+    std::vector<Impact>impacts;
 
     private:
     void CheckCollisions();

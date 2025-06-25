@@ -13,8 +13,8 @@ class Bullet
     Rectangle GetRect();
     bool active;
     WordShip* target;
-    private:
     Vector2 position;
     Vector2 velocity;
+    private:
     float speed;
 };
