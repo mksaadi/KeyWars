@@ -14,6 +14,7 @@ class WordShip
     Vector2 GetCenter();
     std::string word;
     Vector2 position;
+    Vector2 velocity;
     float speed;
     bool alive;
     int cur_target;

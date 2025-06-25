@@ -19,7 +19,7 @@ class Game
     void InitGame();
     void HandleTyping();
     vector<WordShip>CreateWordships();
-    Vector2 getPosition(string word);
+    Vector2 getPosition(string word, vector<WordShip>& existingWords);
     bool isRunning;
     int score;
     int highScore;

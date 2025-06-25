@@ -1,7 +1,8 @@
 #include "game.hpp"
 #include <string>
 #include "bullet.hpp"
-#include <iostream> 
+#include <iostream>
+
 using namespace std;
 
 vector<string>smallerwords =
@@ -85,6 +86,21 @@ void Game::CheckCollisions()
             lives--;
         }
     }
+    // wordship vs wordship
+    for ( int i = 0; i < wordships.size(); i++ )
+    {
+        for ( int j = i + 1; j < wordships.size(); j++ )
+        {
+            if ( CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) )
+            {
+                swap(wordships[i].velocity.x, wordships[j].velocity.x);
+                swap(wordships[i].velocity.y, wordships[j].velocity.y);
+                wordships[i].position.x += wordships[i].velocity.x * 5;
+                wordships[j].position.x += wordships[j].velocity.x * 5;
+            }
+        }
+    }
+
 }
 
 void Game::HandleTyping()
@@ -235,7 +251,7 @@ void Game::InitGame()
     target_idx = -1;
     wordships = CreateWordships();
     explosionTexture = LoadTexture("assets/explosion.png");
-    explosionSound = LoadSound("Sounds/boom.wav");
+    explosionSound = LoadSound("Sounds/explosion.ogg");
 }
 
 
@@ -247,13 +263,13 @@ std::vector<WordShip> Game::CreateWordships()
     {
         int idx = GetRandomValue(0, smallerwords.size() - 1);
         string word = smallerwords[idx];
-        Vector2 pos = getPosition(word);
+        Vector2 pos = getPosition(word, words);
         words.push_back(WordShip(font, pos, word));
     }
     return words;
 }
 
-Vector2 Game::getPosition(string word)
+Vector2 Game::getPosition(string word, vector<WordShip>& existingWords)
 {
     int attempts = 100;
     while ( attempts-- )
@@ -261,11 +277,11 @@ Vector2 Game::getPosition(string word)
         bool ok = true;
         float wordWidth = MeasureTextEx(font, word.c_str(), 30, 2).x;
         float posX = GetRandomValue(0, GetScreenWidth() - ( int )wordWidth);
-        float posY = GetRandomValue(0, ( GetScreenHeight() / 2 ) - 200);
+        float posY = GetRandomValue(0, ( GetScreenHeight() / 2 ) - 500);
         float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
         float height = 30.0;
         Rectangle cur_word_rect = Rectangle { posX,posY,width + 10,height + 10 };
-        for ( auto& wordship : wordships )
+        for ( auto& wordship : existingWords )
         {
             if ( CheckCollisionRecs(cur_word_rect, wordship.GetRect()) )
             {
