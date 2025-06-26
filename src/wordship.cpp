@@ -69,19 +69,21 @@ void WordShip::Draw(bool isTarget)
 
 void WordShip::Move()
 {
+    position.x += velocity.x;
     position.y += velocity.y;
     if ( position.y > GetScreenHeight() )
     {
         alive = false;
     }
-    float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
-    float t = GetTime() - startTime;
-    position.x = basePosition.x + sin(t * frequency) * amplitude;
-    if ( position.x < 0 || position.x + GetRect().width > GetScreenWidth() )
+    float wordWidth = GetRect().width;
+    if ( position.x < 0 || position.x + wordWidth > GetScreenWidth() )
     {
         velocity.x *= -1;
+        position.x = std::max(0.0f, std::min(position.x, GetScreenWidth() - wordWidth));
     }
 }
+
+
 Rectangle WordShip::GetRect()
 {
     float width = MeasureTextEx(font, word.c_str(), 50, 2).x;

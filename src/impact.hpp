@@ -2,7 +2,7 @@
 
 #include "raylib.h" 
 
-class Impact 
+class Impact
 {
     public:
     Impact(Texture2D* texture, Vector2 position);

@@ -19,7 +19,15 @@ class Game
     void InitGame();
     void HandleTyping();
     vector<WordShip>CreateWordships();
-    Vector2 getPosition(string word, vector<WordShip>& existingWords);
+    enum GameState {
+        PLAYING,
+        LEVEL_COMPLETED,
+        SHOW_NEXT_LEVEL
+    };
+    GameState gameState;
+    float levelStartTime;
+    float levelDelay;
+   
     bool isRunning;
     int score;
     int highScore;
@@ -43,4 +51,5 @@ class Game
     PlayerShip playership;
     WordShip wordship;
     Sound explosionSound;
+    Sound impactSound;
 };
