@@ -6,7 +6,7 @@ class WordShip
 {
     public:
     WordShip();
-    WordShip(Font f, Vector2 position, std::string word);
+    WordShip(Font f, Vector2 position, std::string word, int level);
     ~WordShip();
     void Draw(bool isTarget);
     void Move();

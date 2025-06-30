@@ -62,9 +62,12 @@ map<int, vector<string>>levelWord =
 
 Game::Game(Font f) :font(f)
 {
-    this-> gameState = SHOW_NEXT_LEVEL;
+    this->gameState = SHOW_NEXT_LEVEL;
     this->levelStartTime = 0;
-    this-> levelDelay = 3.0f;
+    this->levelDelay = 3.0f;
+    this->music = LoadMusicStream("Sounds/background_music.ogg");
+    PlayMusicStream(music);
+    SetMusicVolume(music, 0.5f);
     InitGame();
 }
 
@@ -73,6 +76,7 @@ Game::~Game()
     UnloadFont(font);
     UnloadTexture(explosionTexture);
     UnloadTexture(impactTexture);
+    UnloadMusicStream(music);
 }
 
 void Game::Draw()
@@ -95,6 +99,12 @@ void Game::Draw()
     {
         impact.Draw();
     }
+    if ( gameState == GAME_OVER )
+    {
+        string str = "GAME OVER";
+        Vector2 size = MeasureTextEx(font, str.c_str(), 60, 4);
+        DrawTextEx(font, str.c_str(), { GetScreenWidth() / 2 - size.x / 2,GetScreenHeight() / 2 - size.y / 2 }, 60, 4, YELLOW);
+    }
     if ( gameState == LEVEL_COMPLETED || gameState == SHOW_NEXT_LEVEL )
     {
         string levelMsg = "LEVEL " + to_string(level);
@@ -105,6 +115,7 @@ void Game::Draw()
 
 void Game::Update()
 {
+    UpdateMusicStream(music);
     for ( auto& bullet : playership.bullets )
     {
         bullet.Update();
@@ -116,6 +127,11 @@ void Game::Update()
     for ( auto& impact : impacts )
     {
         impact.Update();
+    }
+    if ( gameState == GAME_OVER )
+    {
+        cout << "GAME OVER\n";
+        return;
     }
     if ( gameState == PLAYING && wordships.empty() )
     {
@@ -190,6 +206,11 @@ void Game::CheckCollisions()
             if ( lives == 0 )
             {
                 isRunning = false;
+                gameState = GAME_OVER;
+            }
+            else
+            {
+                playership.alive = true;
             }
         }
     }
@@ -266,6 +287,10 @@ void Game::HandleTyping()
                     target_idx = -1;
                 }
             }
+            else
+            {
+                PlaySound(errorSound);
+            }
         }
     }
     else
@@ -288,6 +313,10 @@ void Game::HandleTyping()
                 wordships[target_idx].alive = false;
                 target_idx = -1;
             }
+        }
+        else
+        {
+            PlaySound(errorSound);
         }
     }
 }
@@ -385,6 +414,11 @@ void Game::InitGame()
     impactTexture = LoadTexture("assets/explosion-sheet.png");
     explosionSound = LoadSound("Sounds/explosion.ogg");
     impactSound = LoadSound("Sounds/NenadSimic - Muffled Distant Explosion.wav");
+    errorSound = LoadSound("Sounds/caught.wav");
+    for ( auto& [level, words] : levelWord )
+    {
+        shuffle(words.begin(), words.end(), default_random_engine(GetTime() * 1000));
+    }
 }
 
 
@@ -417,13 +451,13 @@ std::vector<WordShip> Game::CreateWordships()
         float word_width = MeasureTextEx(font, wordPool[i].c_str(), 50, 2).x + 20;
         if ( posx + word_width < GetScreenWidth() )
         {
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i]));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level));
         }
         else
         {
             posx = 0;
             posy -= word_height;
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i]));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level));
         }
         posx += word_width;
         posx += spacing;

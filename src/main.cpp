@@ -14,6 +14,7 @@ int main()
 {
     InitWindow(800, 800, "KeyWars");
     InitAudioDevice();
+
     SetTargetFPS(60);
     srand(time(NULL));
     Texture2D background = LoadTexture("assets/default.jpg");

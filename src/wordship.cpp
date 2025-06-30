@@ -16,7 +16,7 @@ WordShip::WordShip()
     font = GetFontDefault();
 }
 
-WordShip::WordShip(Font f, Vector2 position, std::string word)
+WordShip::WordShip(Font f, Vector2 position, std::string word, int level)
 {
     this->position = position;
     this->word = word;
@@ -24,7 +24,7 @@ WordShip::WordShip(Font f, Vector2 position, std::string word)
     speed = 0.2;
     typedCount = 0;
     velocity.x = GetRandomValue(-30, 30) / 100.0f;
-    velocity.y = speed;
+    velocity.y = min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
     cur_target = 0;
     font = f;
     horizontalSpeed = GetRandomValue(1, 2);

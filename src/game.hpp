@@ -23,7 +23,8 @@ class Game
     {
         PLAYING,
         LEVEL_COMPLETED,
-        SHOW_NEXT_LEVEL
+        SHOW_NEXT_LEVEL,
+        GAME_OVER
     };
     GameState gameState;
     float levelStartTime;
@@ -53,4 +54,5 @@ class Game
     WordShip wordship;
     Sound explosionSound;
     Sound impactSound;
+    Sound errorSound;
 };
