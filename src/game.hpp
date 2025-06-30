@@ -19,7 +19,8 @@ class Game
     void InitGame();
     void HandleTyping();
     vector<WordShip>CreateWordships();
-    enum GameState {
+    enum GameState
+    {
         PLAYING,
         LEVEL_COMPLETED,
         SHOW_NEXT_LEVEL
@@ -27,7 +28,7 @@ class Game
     GameState gameState;
     float levelStartTime;
     float levelDelay;
-   
+
     bool isRunning;
     int score;
     int highScore;

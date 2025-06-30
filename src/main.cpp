@@ -16,7 +16,6 @@ int main()
     InitAudioDevice();
     SetTargetFPS(60);
     srand(time(NULL));
-    // Color background_color = { 29,29,27,255 };
     Texture2D background = LoadTexture("assets/default.jpg");
     float bgY = 0;
     auto UpdateBackground = [&] () {

@@ -62,7 +62,7 @@ map<int, vector<string>>levelWord =
 
 Game::Game(Font f) :font(f)
 {
-    this-> gameState = PLAYING;
+    this-> gameState = SHOW_NEXT_LEVEL;
     this->levelStartTime = 0;
     this-> levelDelay = 3.0f;
     InitGame();
@@ -105,30 +105,6 @@ void Game::Draw()
 
 void Game::Update()
 {
-    if ( gameState == LEVEL_COMPLETED )
-    {
-        if ( GetTime() - levelStartTime > levelDelay )
-        {
-            level ++;
-            target_idx = -1;
-            wordships = CreateWordships();
-            gameState = SHOW_NEXT_LEVEL;
-            levelStartTime = GetTime();
-        }
-        return;
-    }
-    if ( gameState == SHOW_NEXT_LEVEL )
-    {
-        if ( GetTime() - levelStartTime > 1.5 )
-        {
-            gameState = PLAYING;
-        }
-        return;
-    }
-    for ( auto& word : wordships )
-    {
-        word.Move();
-    }
     for ( auto& bullet : playership.bullets )
     {
         bullet.Update();
@@ -141,6 +117,38 @@ void Game::Update()
     {
         impact.Update();
     }
+    if ( gameState == PLAYING && wordships.empty() )
+    {
+        cout << "Level Completed\n";
+        gameState = LEVEL_COMPLETED;
+        levelStartTime = GetTime();
+        return;
+    }
+    if ( gameState == LEVEL_COMPLETED )
+    {
+        if ( GetTime() - levelStartTime > levelDelay )
+        {
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+        }
+        return;
+    }
+    if ( gameState == SHOW_NEXT_LEVEL )
+    {
+        if ( GetTime() - levelStartTime > 1.5f )
+        {
+            level++;
+            target_idx = -1;
+            wordships = CreateWordships();
+            gameState = PLAYING;
+        }
+        return;
+    }
+    for ( auto& word : wordships )
+    {
+        word.Move();
+    }
+
     HandleTyping();
     DeleteInactiveBullets();
     DeleteInactiveWordShips();
@@ -171,8 +179,14 @@ void Game::CheckCollisions()
     {
         if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
         {
+
             playership.alive = false;
+            wordship.alive = false;
             lives--;
+            // trigger explosion
+            Vector2 explosionPos = { playership.position.x + playership.image.width / 2,playership.position.y };
+            explosions.emplace_back(&explosionTexture, explosionPos);
+            PlaySound(explosionSound);
             if ( lives == 0 )
             {
                 isRunning = false;
@@ -189,8 +203,8 @@ void Game::CheckCollisions()
                 Rectangle r1 = wordships[i].GetRect();
                 Rectangle r2 = wordships[j].GetRect();
 
-                float overlapX = std::min(r1.x + r1.width, r2.x + r2.width) - std::max(r1.x, r2.x);
-                float overlapY = std::min(r1.y + r1.height, r2.y + r2.height) - std::max(r1.y, r2.y);
+                float overlapX = min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x);
+                float overlapY = min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y);
 
                 if ( overlapX > 0 && overlapY > 0 )
                 {
@@ -280,7 +294,7 @@ void Game::HandleTyping()
 
 int Game::GetTargetWordIdx(char typed)
 {
-    for ( int i = 0; i < ( int )wordships.size(); i++ )
+    for ( int i = ( int )wordships.size() - 1; i >= 0; i-- )
     {
         if ( wordships[i].word.empty() || !wordships[i].alive )continue;
         Rectangle rect = wordships[i].GetRect();
