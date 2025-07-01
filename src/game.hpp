@@ -21,6 +21,7 @@ class Game
     vector<WordShip>CreateWordships();
     enum GameState
     {
+        MAIN_MENU,
         PLAYING,
         LEVEL_COMPLETED,
         SHOW_NEXT_LEVEL,

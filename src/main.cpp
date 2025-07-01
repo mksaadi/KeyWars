@@ -37,9 +37,9 @@ int main()
         BeginDrawing();
         UpdateBackground();
         DrawBackground();
-        game.Draw();
         game.HandleInput();
         game.Update();
+        game.Draw();
         EndDrawing();
     }
 

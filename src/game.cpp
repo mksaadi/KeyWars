@@ -5,6 +5,8 @@
 #include <map>
 #include <algorithm>
 #include <random>
+#include "raygui.h"
+
 using namespace std;
 
 vector<string>smallerwords =
@@ -62,7 +64,7 @@ map<int, vector<string>>levelWord =
 
 Game::Game(Font f) :font(f)
 {
-    this->gameState = SHOW_NEXT_LEVEL;
+    this->gameState = MAIN_MENU;
     this->levelStartTime = 0;
     this->levelDelay = 3.0f;
     this->music = LoadMusicStream("Sounds/background_music.ogg");
@@ -81,6 +83,23 @@ Game::~Game()
 
 void Game::Draw()
 {
+    if ( gameState == MAIN_MENU )
+    {
+        const int buttonWidth = 200;
+        const int buttonHeight = 50;
+        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
+        const int y = GetScreenHeight() / 2 - buttonHeight;
+        DrawText("KEYWARS", GetScreenWidth() / 2 - MeasureText("KEYWARS", 60) / 2, 100, 60, WHITE);
+        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start Game") ) {
+            InitGame();
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+        }
+        if ( GuiButton({ ( float )x, ( float )y + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
+            CloseWindow();
+        }
+        return;
+    }
     playership.Draw();
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
@@ -102,14 +121,45 @@ void Game::Draw()
     if ( gameState == GAME_OVER )
     {
         string str = "GAME OVER";
-        Vector2 size = MeasureTextEx(font, str.c_str(), 60, 4);
-        DrawTextEx(font, str.c_str(), { GetScreenWidth() / 2 - size.x / 2,GetScreenHeight() / 2 - size.y / 2 }, 60, 4, YELLOW);
+        float fontSize = 60.0f;
+        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
+        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
+        Rectangle rect = {
+            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
+            GetScreenHeight() / 2.0f - size.y / 2.0f - 10,
+            size.x + 20,
+            size.y + 20
+        };
+
+        GuiLabel(rect, str.c_str());
+        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
     }
     if ( gameState == LEVEL_COMPLETED || gameState == SHOW_NEXT_LEVEL )
     {
-        string levelMsg = "LEVEL " + to_string(level);
-        Vector2 size = MeasureTextEx(font, levelMsg.c_str(), 60, 4);
-        DrawTextEx(font, levelMsg.c_str(), { GetScreenWidth() / 2 - size.x / 2,GetScreenHeight() / 2 - size.y / 2 }, 60, 4, YELLOW);
+        string str = "LEVEL " + to_string(level);
+        float fontSize = 60.0f;
+        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
+        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
+        Rectangle rect = {
+            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
+            GetScreenHeight() / 2.0f - size.y / 2.0f - 10,
+            size.x + 20,
+            size.y + 20
+        };
+        GuiLabel(rect, str.c_str());
+        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
     }
 }
 
@@ -403,6 +453,10 @@ void Game::HandleInput()
 
 void Game::InitGame()
 {
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+    GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+    GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY));
+    GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
     score = 0;
     highScore = 0;
     isRunning = true;
