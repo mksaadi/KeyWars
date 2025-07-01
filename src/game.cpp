@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <random>
 #include "raygui.h"
+#include "playership.hpp"   
 
 using namespace std;
 
@@ -134,11 +135,26 @@ void Game::Draw()
             size.y + 20
         };
 
+
+
         GuiLabel(rect, str.c_str());
         GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
         GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
         GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
         GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+
+        const int buttonWidth = 200;
+        const int buttonHeight = 50;
+        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
+        const int y = GetScreenHeight() - 100 - buttonHeight;
+        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
+            playership.alive = true;
+            playership.position.x = GetScreenWidth() / 2;
+            playership.position.y = GetScreenHeight() - 100;
+            InitGame();
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+        }
     }
     if ( gameState == LEVEL_COMPLETED || gameState == SHOW_NEXT_LEVEL )
     {
@@ -463,6 +479,8 @@ void Game::InitGame()
     lives = 3;
     level = 1;
     target_idx = -1;
+    playership.position.x = GetScreenWidth() / 2;
+    playership.position.y = GetScreenHeight() - 100;
     wordships = CreateWordships();
     explosionTexture = LoadTexture("assets/explosion.png");
     impactTexture = LoadTexture("assets/explosion-sheet.png");
