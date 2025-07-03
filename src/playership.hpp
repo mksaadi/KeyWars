@@ -15,6 +15,7 @@ class PlayerShip
     char Fire();
     Rectangle GetRect();
     std::vector<Bullet>bullets;
+    std::vector<Bullet>powerUpBullets;
     Vector2 position;
     Texture2D image;
     bool alive;

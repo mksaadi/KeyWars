@@ -1,12 +1,13 @@
 #include "bullet.hpp"
 #include "raymath.h"
 
-Bullet::Bullet(Vector2 startPos, WordShip* target, float speed)
+Bullet::Bullet(Vector2 startPos, WordShip* target, float speed, bool isPowerBullet)
 {
     this->position = startPos;
     this->speed = speed;
     this->target = target;
     this-> active = true;
+    this->isPowerBullet = isPowerBullet;
     if ( target )
     {
         Vector2 direction = Vector2Subtract(target->GetCenter(), position);
@@ -32,7 +33,14 @@ void Bullet::Update()
 void Bullet::Draw()
 {
     if ( active ) {
-        DrawCircleV(position, 6, SKYBLUE);
+        if ( isPowerBullet )
+        {
+            DrawCircleV(position, 8, RED);
+        }
+        else
+        {
+            DrawCircleV(position, 6, SKYBLUE);
+        }
     }
 }
 

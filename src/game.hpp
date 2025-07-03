@@ -20,6 +20,8 @@ class Game
     void HandleTyping();
     void ShowResult(int yOffset);
     void ShowWords(string str, int yOffset);
+    void ShowPowerUps();
+    void ActivatePowerup();
     vector<WordShip>CreateWordships();
     enum GameState
     {
@@ -50,15 +52,18 @@ class Game
     Font font;
     Texture2D explosionTexture;
     Texture2D impactTexture;
+    Texture2D powerUpTexture;
     std::vector<Explosion>explosions;
     std::vector<Impact>impacts;
 
     private:
     void CheckCollisions();
     void DeleteInactiveBullets();
+    void DeleteInactivePowerdUpBullets();
     void DeleteFinishedExplosions();
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);
+
     int LoadHightScore();
     void SaveHighScore(int curScore);
     vector<WordShip>wordships;

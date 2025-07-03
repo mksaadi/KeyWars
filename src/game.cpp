@@ -177,6 +177,11 @@ void Game::Draw()
     {
         bullet.Draw();
     }
+    for ( auto& bullet : playership.powerUpBullets )
+    {
+        bullet.Draw();
+    }
+
     for ( auto& explosion : explosions )
     {
         explosion.Draw();
@@ -185,6 +190,8 @@ void Game::Draw()
     {
         impact.Draw();
     }
+    ShowPowerUps();
+
 
     if ( gameState == SHOW_NEXT_LEVEL )
     {
@@ -193,12 +200,17 @@ void Game::Draw()
     }
 
 
+
 }
 
 void Game::Update()
 {
     UpdateMusicStream(music);
     for ( auto& bullet : playership.bullets )
+    {
+        bullet.Update();
+    }
+    for ( auto& bullet : playership.powerUpBullets )
     {
         bullet.Update();
     }
@@ -220,7 +232,7 @@ void Game::Update()
         cout << "Level Completed\n";
         if ( numWordsWithoutMiss >= level * 5 )
         {
-            score += 100;
+            score += ( level * 10 );
             std::cout << "Bonus Achieved!!!\n";
         }
         gameState = LEVEL_COMPLETED;
@@ -258,6 +270,7 @@ void Game::Update()
 
     HandleTyping();
     DeleteInactiveBullets();
+    DeleteInactivePowerdUpBullets();
     DeleteInactiveWordShips();
     DeleteFinishedExplosions();
     CheckCollisions();
@@ -278,7 +291,24 @@ void Game::CheckCollisions()
                 PlaySound(impactSound);
             }
         }
+    }
 
+    //wordships vs powered up bullets
+    for ( auto& bullet : playership.powerUpBullets )
+    {
+        if ( !bullet.active )continue;
+        for ( auto& wordship : wordships )
+        {
+            if ( CheckCollisionRecs(bullet.GetRect(), wordship.GetRect()) )
+            {
+                wordship.alive = false;
+                bullet.active = false;
+                Vector2 explosionPos = wordship.GetCenter();
+                explosions.emplace_back(&explosionTexture, explosionPos);
+                PlaySound(explosionSound);
+                break;
+            }
+        }
     }
 
     // wordship vs playership
@@ -342,6 +372,14 @@ void Game::CheckCollisions()
 
 void Game::HandleTyping()
 {
+    if ( ( IsKeyDown(KEY_TAB) && IsKeyPressed(KEY_ENTER) ) )
+    {
+        if ( powerUps > 0 )
+        {
+            ActivatePowerup();
+            powerUps--;
+        }
+    }
     char typed = playership.Fire();
     if ( typed == '\0' )return;
 
@@ -374,7 +412,7 @@ void Game::HandleTyping()
                 successfulKeyStrokes++;
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-                playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
+                playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f, false));
 
                 wordships[target_idx].typedCount++;
 
@@ -388,7 +426,7 @@ void Game::HandleTyping()
                     {
                         ++numWordsWithoutMiss;
                         std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
-                        if ( numWordsWithoutMiss >= level && canPowerUp )
+                        if ( numWordsWithoutMiss >= ( level + 4 + ( level / 2 ) ) && canPowerUp )
                         {
                             powerUps++;
                             canPowerUp = false;
@@ -421,7 +459,7 @@ void Game::HandleTyping()
             // matched. So fire a bullet towards the wordship
 
             Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-            playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
+            playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f, false));
 
             if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
@@ -432,7 +470,7 @@ void Game::HandleTyping()
                 {
                     ++numWordsWithoutMiss;;
                     std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
-                    if ( numWordsWithoutMiss >= level && canPowerUp )
+                    if ( numWordsWithoutMiss >= ( level + 4 + ( level / 2 ) ) && canPowerUp )
                     {
                         powerUps++;
                         canPowerUp = false;
@@ -521,6 +559,34 @@ void Game::ShowWords(string str, int yOffset)
 
 }
 
+void Game::ShowPowerUps()
+{
+    float x = GetScreenWidth() - powerUpTexture.width - 5;
+    float y = GetScreenHeight() - powerUpTexture.height;
+    DrawTextureV(powerUpTexture, { x,y }, WHITE);
+    x -= 10;
+    DrawText(to_string(powerUps).c_str(), x, y, 30, WHITE);
+}
+
+void Game::ActivatePowerup()
+{
+    int target = 0;
+    for ( int i = 0; i < level && target < wordships.size(); i++ )
+    {
+        Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+        while ( target < wordships.size() && !wordships[target].alive )
+        {
+            target++;
+        }
+        if ( target < wordships.size() )
+        {
+            playership.powerUpBullets.push_back(Bullet(shipCenter, &wordships[target], 30.0f, true));
+            target++;
+        }
+    }
+}
+
+
 int Game::GetTargetWordIdx(char typed)
 {
     for ( int i = ( int )wordships.size() - 1; i >= 0; i-- )
@@ -576,6 +642,21 @@ void Game::DeleteInactiveBullets()
         if ( !it->active )
         {
             it = playership.bullets.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+void Game::DeleteInactivePowerdUpBullets()
+{
+    auto it = playership.powerUpBullets.begin();
+    while ( it != playership.powerUpBullets.end() )
+    {
+        if ( !it->active )
+        {
+            it = playership.powerUpBullets.erase(it);
         }
         else
         {
@@ -652,6 +733,7 @@ void Game::InitGame()
     playership.position.x = GetScreenWidth() / 2;
     playership.position.y = GetScreenHeight() - 100;
     wordships = CreateWordships();
+    powerUpTexture = LoadTexture("assets/ExplosiveBarrel.png");
     explosionTexture = LoadTexture("assets/explosion.png");
     impactTexture = LoadTexture("assets/explosion-sheet.png");
     explosionSound = LoadSound("Sounds/explosion.ogg");
