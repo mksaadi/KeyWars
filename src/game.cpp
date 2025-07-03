@@ -7,6 +7,7 @@
 #include <random>
 #include "raygui.h"
 #include "playership.hpp"   
+#define PANEL 6
 
 using namespace std;
 
@@ -101,6 +102,82 @@ void Game::Draw()
         }
         return;
     }
+    else if ( gameState == GAME_OVER )
+    {
+        for ( auto& wordship : wordships )
+        {
+            wordship.alive = false;
+        }
+        // show result
+
+        ShowResult(50);
+
+        string str = "GAME OVER";
+        float fontSize = 60.0f;
+        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
+        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
+        Rectangle rect = {
+            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
+            GetScreenHeight() / 2.0f - size.y / 2.0f - 250,
+            size.x + 20,
+            size.y + 20
+        };
+        GuiLabel(rect, str.c_str());
+        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+
+
+        // show the start new game button
+
+        const int buttonWidth = 200;
+        const int buttonHeight = 50;
+        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
+        const int y = GetScreenHeight() - 100 - buttonHeight;
+        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
+            playership.alive = true;
+            playership.position.x = GetScreenWidth() / 2;
+            playership.position.y = GetScreenHeight() - 100;
+            InitGame();
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+        }
+        if ( GuiButton({ ( float )x, ( float )y + 20.0f + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
+            CloseWindow();
+        }
+
+        return;
+    }
+    else if ( gameState == LEVEL_COMPLETED )
+    {
+        // show score and accuracy
+        ShowResult(0);
+        string str = "LEVEL COMPLETE";
+        float fontSize = 60.0f;
+        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
+        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
+        Rectangle rect = {
+            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
+            GetScreenHeight() / 2.0f - size.y / 2.0f - 150,
+            size.x + 20,
+            size.y + 20
+        };
+        GuiLabel(rect, str.c_str());
+        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
+        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+        return;
+    }
+
+
     playership.Draw();
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
@@ -119,44 +196,7 @@ void Game::Draw()
     {
         impact.Draw();
     }
-    if ( gameState == GAME_OVER )
-    {
-        string str = "GAME OVER";
-        float fontSize = 60.0f;
-        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
-        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
-        Rectangle rect = {
-            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
-            GetScreenHeight() / 2.0f - size.y / 2.0f - 10,
-            size.x + 20,
-            size.y + 20
-        };
-
-
-
-        GuiLabel(rect, str.c_str());
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
-
-        const int buttonWidth = 200;
-        const int buttonHeight = 50;
-        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
-        const int y = GetScreenHeight() - 100 - buttonHeight;
-        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
-            playership.alive = true;
-            playership.position.x = GetScreenWidth() / 2;
-            playership.position.y = GetScreenHeight() - 100;
-            InitGame();
-            gameState = SHOW_NEXT_LEVEL;
-            levelStartTime = GetTime();
-        }
-    }
-    if ( gameState == LEVEL_COMPLETED || gameState == SHOW_NEXT_LEVEL )
+    if ( gameState == SHOW_NEXT_LEVEL )
     {
         string str = "LEVEL " + to_string(level);
         float fontSize = 60.0f;
@@ -177,6 +217,8 @@ void Game::Draw()
         GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
         GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
     }
+
+
 }
 
 void Game::Update()
@@ -319,6 +361,7 @@ void Game::HandleTyping()
 {
     char typed = playership.Fire();
     if ( typed == '\0' )return;
+
     if ( wordships.empty() )
     {
         std::cout << "Level Completed\n";
@@ -330,6 +373,7 @@ void Game::HandleTyping()
     {
         target_idx = -1;
     }
+    totalKeyStrokes++;
     if ( target_idx == -1 )
     {
         target_idx = GetTargetWordIdx(typed);
@@ -337,6 +381,7 @@ void Game::HandleTyping()
         {
             if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
             {
+                score++;
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
                 playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
@@ -363,6 +408,7 @@ void Game::HandleTyping()
     {
         if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
         {
+            score++;
             PlaySound(playership.LaserSound);
             wordships[target_idx].typedCount++;
 
@@ -385,6 +431,47 @@ void Game::HandleTyping()
             PlaySound(errorSound);
         }
     }
+}
+
+void Game::ShowResult(int yOffset)
+{
+    // Save current style values
+    int prevTextSize = GuiGetStyle(DEFAULT, TEXT_SIZE);
+    int prevTextSpacing = GuiGetStyle(DEFAULT, TEXT_SPACING);
+    int prevLabelColor = GuiGetStyle(LABEL, TEXT_COLOR_NORMAL);
+    int prevLabelBg = GuiGetStyle(LABEL, BASE_COLOR_NORMAL);
+
+    // Apply styles for the result panel
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 28);
+    GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+    GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(BLACK));
+    GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY)); // Gives subtle background
+
+    // Panel size and position
+    float cardWidth = 300;
+    float cardHeight = 200;
+    float cardX = GetScreenWidth() / 2.0f - cardWidth / 2.0f;
+    float cardY = ( GetScreenHeight() / 2.0f - cardHeight / 2.0f ) - yOffset;
+    Rectangle cardRect = { cardX, cardY, cardWidth, cardHeight };
+    GuiPanel(cardRect, "");
+
+    // Score and accuracy
+    string scoreStr = "Score: " + to_string(score);
+    int acc = ( totalKeyStrokes > 0 ) ? ( ( score * 100 ) / totalKeyStrokes ) : 0;
+    string accuracyStr = "Accuracy: " + to_string(acc) + "%";
+
+    float padding = 20;
+    Vector2 scorePos = { cardX + padding, cardY + padding + 20 };
+    Vector2 accPos = { cardX + padding, cardY + padding + 80 };
+
+    GuiLabel({ scorePos.x, scorePos.y, cardWidth - 2 * padding, 30 }, scoreStr.c_str());
+    GuiLabel({ accPos.x, accPos.y, cardWidth - 2 * padding, 30 }, accuracyStr.c_str());
+
+    // Restore previous styles
+    GuiSetStyle(DEFAULT, TEXT_SIZE, prevTextSize);
+    GuiSetStyle(DEFAULT, TEXT_SPACING, prevTextSpacing);
+    GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, prevLabelColor);
+    GuiSetStyle(LABEL, BASE_COLOR_NORMAL, prevLabelBg);
 }
 
 int Game::GetTargetWordIdx(char typed)
@@ -474,6 +561,7 @@ void Game::InitGame()
     GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY));
     GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
     score = 0;
+    totalKeyStrokes = 0;
     highScore = 0;
     isRunning = true;
     lives = 3;

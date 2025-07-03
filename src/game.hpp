@@ -18,6 +18,7 @@ class Game
     void HandleInput();
     void InitGame();
     void HandleTyping();
+    void ShowResult(int yOffset);
     vector<WordShip>CreateWordships();
     enum GameState
     {
@@ -33,6 +34,8 @@ class Game
 
     bool isRunning;
     int score;
+    int totalKeyStrokes;
+    int accuracy;
     int highScore;
     int lives;
     int level;
