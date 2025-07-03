@@ -34,8 +34,13 @@ class Game
     float levelDelay;
 
     bool isRunning;
+    bool canPowerUp;
+    bool hasMissTyped;
+    int powerUps;
     int score;
     int totalKeyStrokes;
+    int successfulKeyStrokes;
+    int numWordsWithoutMiss;
     int accuracy;
     int highScore;
     int lives;

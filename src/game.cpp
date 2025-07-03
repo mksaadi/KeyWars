@@ -218,14 +218,24 @@ void Game::Update()
     if ( gameState == PLAYING && wordships.empty() )
     {
         cout << "Level Completed\n";
+        if ( numWordsWithoutMiss >= level * 5 )
+        {
+            score += 100;
+            std::cout << "Bonus Achieved!!!\n";
+        }
         gameState = LEVEL_COMPLETED;
         levelStartTime = GetTime();
         return;
     }
     if ( gameState == LEVEL_COMPLETED )
     {
+
         if ( GetTime() - levelStartTime > levelDelay )
         {
+            level++;
+            canPowerUp = true;
+            hasMissTyped = false;
+            numWordsWithoutMiss = 0;
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
@@ -235,7 +245,6 @@ void Game::Update()
     {
         if ( GetTime() - levelStartTime > 1.5f )
         {
-            level++;
             target_idx = -1;
             wordships = CreateWordships();
             gameState = PLAYING;
@@ -338,9 +347,15 @@ void Game::HandleTyping()
 
     if ( wordships.empty() )
     {
+        if ( numWordsWithoutMiss >= level * 5 )
+        {
+            score += 100;
+            std::cout << "Bonus Achieved!!!\n";
+        }
         std::cout << "Level Completed\n";
         gameState = LEVEL_COMPLETED;
         levelStartTime = GetTime();
+
         return;
     }
     if ( target_idx == -1 && !wordships[target_idx].alive )
@@ -356,6 +371,7 @@ void Game::HandleTyping()
             if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
             {
                 score++;
+                successfulKeyStrokes++;
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
                 playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f));
@@ -368,13 +384,28 @@ void Game::HandleTyping()
                     Vector2 explosionPos = wordships[target_idx].GetCenter();
                     explosions.emplace_back(&explosionTexture, explosionPos);
                     PlaySound(explosionSound);
+                    if ( !hasMissTyped )
+                    {
+                        ++numWordsWithoutMiss;
+                        std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
+                        if ( numWordsWithoutMiss >= level && canPowerUp )
+                        {
+                            powerUps++;
+                            canPowerUp = false;
+                            std::cout << "PowerUps = " << powerUps << "\n";
+                        }
+                    }
+                    hasMissTyped = false;
                     wordships[target_idx].alive = false;
                     target_idx = -1;
+
                 }
             }
             else
             {
                 PlaySound(errorSound);
+                hasMissTyped = true;
+                numWordsWithoutMiss = 0;
             }
         }
     }
@@ -383,6 +414,7 @@ void Game::HandleTyping()
         if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
         {
             score++;
+            successfulKeyStrokes++;
             PlaySound(playership.LaserSound);
             wordships[target_idx].typedCount++;
 
@@ -396,6 +428,18 @@ void Game::HandleTyping()
                 Vector2 explosionPos = wordships[target_idx].GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
                 PlaySound(explosionSound);
+                if ( !hasMissTyped )
+                {
+                    ++numWordsWithoutMiss;;
+                    std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
+                    if ( numWordsWithoutMiss >= level && canPowerUp )
+                    {
+                        powerUps++;
+                        canPowerUp = false;
+                        std::cout << "PowerUps = " << powerUps << "\n";
+                    }
+                }
+                hasMissTyped = false;
                 wordships[target_idx].alive = false;
                 target_idx = -1;
             }
@@ -403,6 +447,8 @@ void Game::HandleTyping()
         else
         {
             PlaySound(errorSound);
+            hasMissTyped = true;
+            numWordsWithoutMiss = 0;
         }
     }
 }
@@ -431,7 +477,7 @@ void Game::ShowResult(int yOffset)
 
     // Score and accuracy
     string scoreStr = "Score: " + to_string(score);
-    int acc = ( totalKeyStrokes > 0 ) ? ( ( score * 100 ) / totalKeyStrokes ) : 0;
+    int acc = ( totalKeyStrokes > 0 ) ? ( ( successfulKeyStrokes * 100 ) / totalKeyStrokes ) : 0;
     string accuracyStr = "Accuracy: " + to_string(acc) + "%";
     string highScoreStr = "High Score : " + to_string(highScore);
 
@@ -593,6 +639,11 @@ void Game::InitGame()
     GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
     score = 0;
     totalKeyStrokes = 0;
+    successfulKeyStrokes = 0;
+    numWordsWithoutMiss = 0;
+    canPowerUp = true;
+    hasMissTyped = false;
+    powerUps = 0;
     highScore = LoadHightScore();
     isRunning = true;
     lives = 3;
