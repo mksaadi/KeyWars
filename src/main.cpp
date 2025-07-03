@@ -12,12 +12,12 @@ using namespace std;
 
 int main()
 {
-    InitWindow(800, 800, "KeyWars");
+    InitWindow(1920, 1080, "KeyWars");
     SetTargetFPS(60);
     InitAudioDevice();
     srand(time(NULL));
-    
-    
+
+
     Texture2D background = LoadTexture("assets/default.jpg");
     float bgY = 0;
     auto UpdateBackground = [&] () {

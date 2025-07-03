@@ -19,6 +19,7 @@ class Game
     void InitGame();
     void HandleTyping();
     void ShowResult(int yOffset);
+    void ShowWords(string str, int yOffset);
     vector<WordShip>CreateWordships();
     enum GameState
     {
@@ -53,6 +54,8 @@ class Game
     void DeleteFinishedExplosions();
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);
+    int LoadHightScore();
+    void SaveHighScore(int curScore);
     vector<WordShip>wordships;
     PlayerShip playership;
     WordShip wordship;

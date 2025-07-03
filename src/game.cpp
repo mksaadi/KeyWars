@@ -2,6 +2,7 @@
 #include <string>
 #include "bullet.hpp"
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <algorithm>
 #include <random>
@@ -64,8 +65,9 @@ map<int, vector<string>>levelWord =
     {10,elavenLetterWords},
 };
 
-Game::Game(Font f) :font(f)
+Game::Game(Font f)
 {
+    this->font = f;
     this->gameState = MAIN_MENU;
     this->levelStartTime = 0;
     this->levelDelay = 3.0f;
@@ -104,6 +106,12 @@ void Game::Draw()
     }
     else if ( gameState == GAME_OVER )
     {
+        // save the highscore
+        if ( score > highScore )
+        {
+            SaveHighScore(score);
+            highScore = LoadHightScore();
+        }
         for ( auto& wordship : wordships )
         {
             wordship.alive = false;
@@ -112,24 +120,7 @@ void Game::Draw()
 
         ShowResult(50);
 
-        string str = "GAME OVER";
-        float fontSize = 60.0f;
-        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
-        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
-        Rectangle rect = {
-            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
-            GetScreenHeight() / 2.0f - size.y / 2.0f - 250,
-            size.x + 20,
-            size.y + 20
-        };
-        GuiLabel(rect, str.c_str());
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+        ShowWords("GAME OVER", 250);
 
 
         // show the start new game button
@@ -149,36 +140,34 @@ void Game::Draw()
         if ( GuiButton({ ( float )x, ( float )y + 20.0f + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
             CloseWindow();
         }
-
         return;
     }
     else if ( gameState == LEVEL_COMPLETED )
     {
+        if ( score > highScore )
+        {
+            SaveHighScore(score);
+            highScore = LoadHightScore();
+        }
+
         // show score and accuracy
+
         ShowResult(0);
         string str = "LEVEL COMPLETE";
-        float fontSize = 60.0f;
-        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
-        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
-        Rectangle rect = {
-            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
-            GetScreenHeight() / 2.0f - size.y / 2.0f - 150,
-            size.x + 20,
-            size.y + 20
-        };
-        GuiLabel(rect, str.c_str());
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+        ShowWords(str, 150);
         return;
     }
 
 
     playership.Draw();
+    float x = 0 + playership.image.width / 2;
+    float y = GetScreenHeight() - playership.image.height;
+    for ( int i = 0; i + 1 < lives; i++ )
+    {
+        Vector2 pos = { x,y };
+        DrawTextureV(playership.image, pos, WHITE);
+        x += playership.image.width + 10;
+    }
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
         wordships[i].Draw(i == target_idx);
@@ -196,26 +185,11 @@ void Game::Draw()
     {
         impact.Draw();
     }
+
     if ( gameState == SHOW_NEXT_LEVEL )
     {
         string str = "LEVEL " + to_string(level);
-        float fontSize = 60.0f;
-        GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
-        Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
-        Rectangle rect = {
-            GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
-            GetScreenHeight() / 2.0f - size.y / 2.0f - 10,
-            size.x + 20,
-            size.y + 20
-        };
-        GuiLabel(rect, str.c_str());
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
-        GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+        ShowWords(str, 0);
     }
 
 
@@ -459,12 +433,16 @@ void Game::ShowResult(int yOffset)
     string scoreStr = "Score: " + to_string(score);
     int acc = ( totalKeyStrokes > 0 ) ? ( ( score * 100 ) / totalKeyStrokes ) : 0;
     string accuracyStr = "Accuracy: " + to_string(acc) + "%";
+    string highScoreStr = "High Score : " + to_string(highScore);
+
 
     float padding = 20;
     Vector2 scorePos = { cardX + padding, cardY + padding + 20 };
-    Vector2 accPos = { cardX + padding, cardY + padding + 80 };
+    Vector2 highScorePos = { cardX + padding, cardY + padding + 80 };
+    Vector2 accPos = { cardX + padding, cardY + padding + 140 };
 
     GuiLabel({ scorePos.x, scorePos.y, cardWidth - 2 * padding, 30 }, scoreStr.c_str());
+    GuiLabel({ highScorePos.x, highScorePos.y, cardWidth - 2 * padding, 30 }, highScoreStr.c_str());
     GuiLabel({ accPos.x, accPos.y, cardWidth - 2 * padding, 30 }, accuracyStr.c_str());
 
     // Restore previous styles
@@ -472,6 +450,29 @@ void Game::ShowResult(int yOffset)
     GuiSetStyle(DEFAULT, TEXT_SPACING, prevTextSpacing);
     GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, prevLabelColor);
     GuiSetStyle(LABEL, BASE_COLOR_NORMAL, prevLabelBg);
+}
+
+void Game::ShowWords(string str, int yOffset)
+{
+
+    float fontSize = 60.0f;
+    GuiSetStyle(DEFAULT, TEXT_SIZE, ( int )fontSize);
+    GuiSetStyle(DEFAULT, TEXT_SPACING, 4);
+    GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+    GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLACK));
+    Vector2 size = MeasureTextEx(GetFontDefault(), str.c_str(), fontSize, 4.0f);
+    Rectangle rect = {
+        GetScreenWidth() / 2.0f - size.x / 2.0f - 10,
+        GetScreenHeight() / 2.0f - size.y / 2.0f - yOffset,
+        size.x + 20,
+        size.y + 20
+    };
+    GuiLabel(rect, str.c_str());
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+    GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
+    GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
+    GuiSetStyle(LABEL, BASE_COLOR_NORMAL, ColorToInt(BLANK));
+
 }
 
 int Game::GetTargetWordIdx(char typed)
@@ -487,6 +488,36 @@ int Game::GetTargetWordIdx(char typed)
         }
     }
     return -1;
+}
+
+int Game::LoadHightScore()
+{
+    int prevHighScore = 0;
+    ifstream highScoreFile("highscore.txt");
+    if ( highScoreFile.is_open() )
+    {
+        highScoreFile >> prevHighScore;
+        highScoreFile.close();
+    }
+    else
+    {
+        cerr << "Failed to load highscore from file\n";
+    }
+    return prevHighScore;
+}
+
+void Game::SaveHighScore(int curScore)
+{
+    ofstream highscoreFile("highscore.txt");
+    if ( highscoreFile.is_open() )
+    {
+        highscoreFile << curScore;
+        highscoreFile.close();
+    }
+    else
+    {
+        cerr << "Failed to load highscore to file\n";
+    }
 }
 
 
@@ -562,7 +593,7 @@ void Game::InitGame()
     GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
     score = 0;
     totalKeyStrokes = 0;
-    highScore = 0;
+    highScore = LoadHightScore();
     isRunning = true;
     lives = 3;
     level = 1;
