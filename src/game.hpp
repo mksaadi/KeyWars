@@ -55,6 +55,8 @@ class Game
     int lives;
     int level;
     int target_idx;
+    int menuSelection;
+    int totalMenuItems;
     Music music;
     Font font;
     Texture2D explosionTexture;

@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "raygui.h"
+#include "raymath.h"    
 
 
 using namespace std;
@@ -72,6 +73,8 @@ Game::Game(Font f)
     this->music = LoadMusicStream("Sounds/background_music.ogg");
     this->shouldClose = false;
     this->isPaused = false;
+    this-> menuSelection = 0;
+    this-> totalMenuItems = 2;
     PlayMusicStream(music);
     SetMusicVolume(music, 0.5f);
     InitGame();
@@ -146,16 +149,62 @@ void Game::Draw()
         const int buttonHeight = 50;
         const int x = GetScreenWidth() / 2 - buttonWidth / 2;
         const int y = GetScreenHeight() - 100 - buttonHeight;
-        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
+        Rectangle startBtn = { x,y,buttonWidth,buttonHeight };
+        Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
+
+
+        Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
+        Color defaultBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL));
+        Color defaultText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL));
+
+
+        Color hoverBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_FOCUSED));
+        Color hoverBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED));
+        Color hoverText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED));
+
+
+        if ( menuSelection == 0 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool startPressed = GuiButton(startBtn, "Start New Game") || ( menuSelection == 0 && IsKeyPressed(KEY_ENTER) );
+
+
+        // resent style
+
+
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( menuSelection == 1 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
+
+        // reset style
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( startPressed )
+        {
             playership.alive = true;
-            Initialize();
+            InitGame();
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
-
         }
-        if ( GuiButton({ ( float )x, ( float )y + 20.0f + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
+        if ( quitPressed ) {
             shouldClose = true;
         }
+        return;
 
     }
     for ( auto& explosion : explosions )
@@ -173,12 +222,58 @@ void Game::Draw()
         const int x = GetScreenWidth() / 2 - buttonWidth / 2;
         const int y = GetScreenHeight() / 2 - buttonHeight;
         DrawText("KEYWARS", GetScreenWidth() / 2 - MeasureText("KEYWARS", 60) / 2, 100, 60, WHITE);
-        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start Game") ) {
+
+        Rectangle startBtn = { x,y,buttonWidth,buttonHeight };
+        Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
+
+
+        Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
+        Color defaultBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL));
+        Color defaultText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL));
+
+
+        Color hoverBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_FOCUSED));
+        Color hoverBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED));
+        Color hoverText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED));
+
+
+        if ( menuSelection == 0 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool startPressed = GuiButton(startBtn, "Start Game") || ( menuSelection == 0 && IsKeyPressed(KEY_ENTER) );
+
+
+        // resent style
+
+
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( menuSelection == 1 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
+
+        // reset style
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( startPressed ) {
             InitGame();
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
-        if ( GuiButton({ ( float )x, ( float )y + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
+        if ( quitPressed ) {
             shouldClose = true;
         }
         return;
@@ -209,7 +304,6 @@ void Game::Draw()
             bullet.Draw();
         }
 
-
         ShowPowerUps();
         ShowProgressbar();
     }
@@ -237,6 +331,17 @@ void Game::Update()
     HandleTyping();
     if ( gameState == PAUSED )return;
     UpdateMusicStream(music);
+    if ( gameState == MAIN_MENU || gameState == GAME_OVER )
+    {
+        if ( IsKeyPressed(KEY_DOWN) )
+        {
+            menuSelection = ( menuSelection + 1 ) % totalMenuItems;
+        }
+        if ( IsKeyPressed(KEY_UP) )
+        {
+            menuSelection = ( ( menuSelection - 1 ) + totalMenuItems ) % totalMenuItems;
+        }
+    }
     for ( auto& bullet : playership.bullets )
     {
         bullet.Update();
@@ -286,10 +391,6 @@ void Game::Update()
             return;
         }
 
-    }
-    if ( gameState == GAME_OVER )
-    {
-        return;
     }
     if ( gameState == PLAYING && wordships.empty() )
     {
@@ -469,7 +570,6 @@ void Game::HandleTyping()
         {
             ActivatePowerup();
             powerUps--;
-
         }
     }
     char typed = playership.Fire();
@@ -693,21 +793,21 @@ void Game::ActivatePowerup()
 {
     int target = 0;
     Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-    for ( int i = 0; i < level && target < ( int )wordships.size(); i++ )
+    vector<pair<float, WordShip*>>targets;
+    for ( auto& wordship : wordships )
     {
-        while ( target < ( int )wordships.size() && !wordships[target].alive )
+        if ( wordship.alive )
         {
-            target++;
+            float distance = Vector2Distance(wordship.GetCenter(), shipCenter);
+            targets.push_back({ distance,&wordship });
         }
-        if ( target < ( int )wordships.size() && wordships[target].alive )
-        {
-            playership.powerUpBullets.push_back(Bullet(shipCenter, &wordships[target], 30.0f, true));
-            target++;
-            if ( target >= ( int )wordships.size() )
-            {
-                return;
-            }
-        }
+    }
+    sort(targets.begin(), targets.end());
+
+    for ( int i = 0; i < min(level, ( int )targets.size()); i++ )
+    {
+        WordShip* targetShip = targets[i].second;
+        playership.powerUpBullets.push_back(Bullet(shipCenter, targetShip, 30.0f, true));
     }
 }
 
