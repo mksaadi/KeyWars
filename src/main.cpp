@@ -34,7 +34,7 @@ int main()
     while ( !WindowShouldClose() && !game.shouldClose )
     {
         BeginDrawing();
-        UpdateBackground();
+        if ( !game.isPaused )UpdateBackground();
         DrawBackground();
         game.HandleInput();
         game.Update();

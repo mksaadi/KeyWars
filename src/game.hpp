@@ -32,7 +32,8 @@ class Game
         SHOW_NEXT_LEVEL,
         PLAYING,
         LEVEL_COMPLETED,
-        GAME_OVER
+        GAME_OVER,
+        PAUSED
     };
     GameState gameState;
     float levelStartTime;
@@ -43,6 +44,7 @@ class Game
     bool canPowerUp;
     bool hasMissTyped;
     bool shouldClose;
+    bool isPaused;
     int powerUps;
     int score;
     int totalKeyStrokes;

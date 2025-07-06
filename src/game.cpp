@@ -71,6 +71,7 @@ Game::Game(Font f)
     this->levelDelay = 3.0f;
     this->music = LoadMusicStream("Sounds/background_music.ogg");
     this->shouldClose = false;
+    this->isPaused = false;
     PlayMusicStream(music);
     SetMusicVolume(music, 0.5f);
     InitGame();
@@ -182,7 +183,7 @@ void Game::Draw()
         }
         return;
     }
-    if ( gameState == PLAYING && playership.alive && lives > 0 )
+    if ( gameState == PLAYING || gameState == PAUSED )
     {
         playership.Draw();
         float x = 0 + playership.image.width / 2;
@@ -233,8 +234,9 @@ void Game::Draw()
 
 void Game::Update()
 {
+    HandleTyping();
+    if ( gameState == PAUSED )return;
     UpdateMusicStream(music);
-
     for ( auto& bullet : playership.bullets )
     {
         bullet.Update();
@@ -256,7 +258,6 @@ void Game::Update()
         word.Move();
     }
     CheckCollisions();
-    HandleTyping();
     DeleteInactiveBullets();
     DeleteInactivePowerdUpBullets();
     DeleteInactiveWordShips();
@@ -333,6 +334,10 @@ void Game::Update()
 
 void Game::CheckCollisions()
 {
+    if ( !isValid(target_idx) )
+    {
+        target_idx = -1;
+    }
     if ( gameState == GAME_OVER )
     {
         target_idx = -1;
@@ -442,6 +447,22 @@ void Game::HandleTyping()
     {
         target_idx = -1;
     }
+    if ( IsKeyPressed(KEY_SPACE) )
+    {
+        if ( gameState == PLAYING )
+        {
+            gameState = PAUSED;
+            isPaused = true;
+            return;
+        }
+        else if ( gameState == PAUSED )
+        {
+            gameState = PLAYING;
+            isPaused = false;
+            return;
+        }
+    }
+    if ( isPaused || gameState != PLAYING )return;
     if ( ( IsKeyDown(KEY_TAB) && IsKeyPressed(KEY_ENTER) ) )
     {
         if ( powerUps > 0 )
