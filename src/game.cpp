@@ -255,13 +255,13 @@ void Game::Update()
     {
         word.Move();
     }
+    CheckCollisions();
+    HandleTyping();
     DeleteInactiveBullets();
     DeleteInactivePowerdUpBullets();
     DeleteInactiveWordShips();
     DeleteFinishedExplosions();
     DeleteInactiveImpacts();
-    HandleTyping();
-    CheckCollisions();
 
 
     if ( gameState == PLAYING && !playership.alive )
@@ -333,22 +333,18 @@ void Game::Update()
 
 void Game::CheckCollisions()
 {
-    if ( wordships.empty() )
-    {
-        target_idx = -1;
-        return;
-    }
     if ( gameState == GAME_OVER )
     {
         target_idx = -1;
         return;
     }
     // bullets vs wordships
-    if ( isValid(target_idx) )
+
+    for ( auto& bullet : playership.bullets )
     {
-        for ( auto& bullet : playership.bullets )
+        if ( bullet.target && bullet.target->alive )
         {
-            if ( CheckCollisionRecs(bullet.GetRect(), wordships[target_idx].GetRect()) )
+            if ( CheckCollisionRecs(bullet.GetRect(), bullet.target->GetRect()) )
             {
                 Vector2 hitPos = bullet.position;
                 impacts.emplace_back(&impactTexture, hitPos);
@@ -356,22 +352,27 @@ void Game::CheckCollisions()
                 PlaySound(impactSound);
             }
         }
+
     }
+
 
     //wordships vs powered up bullets
 
     for ( auto& bullet : playership.powerUpBullets )
     {
-        if ( !bullet.active )continue;
         if ( bullet.target && bullet.target->alive )
         {
             if ( CheckCollisionRecs(bullet.GetRect(), bullet.target ->GetRect()) )
             {
                 Vector2 explosionPos = bullet.target->GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
+                PlaySound(explosionSound);
+                if ( isValid(target_idx) && bullet.target->word == wordships[target_idx].word )
+                {
+                    target_idx = -1;
+                }
                 bullet.target->alive = false;
                 bullet.active = false;
-                PlaySound(explosionSound);
             }
         }
     }
@@ -411,11 +412,8 @@ void Game::CheckCollisions()
     }
 
     // wordship vs playership
-    if ( !playership.alive )return;
-
     for ( auto& wordship : wordships )
     {
-        if ( !wordship.alive )continue;
         if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
         {
             lastDeathTime = GetTime();
@@ -426,6 +424,7 @@ void Game::CheckCollisions()
             PlaySound(explosionSound);
             playership.alive = false;
             lives--;
+            return;
         }
     }
 
@@ -439,18 +438,17 @@ bool Game::isValid(int idx)
 
 void Game::HandleTyping()
 {
-    if ( gameState != PLAYING || lives <= 0 || !playership.alive || wordships.empty() )return;
-
+    if ( !isValid(target_idx) )
+    {
+        target_idx = -1;
+    }
     if ( ( IsKeyDown(KEY_TAB) && IsKeyPressed(KEY_ENTER) ) )
     {
         if ( powerUps > 0 )
         {
             ActivatePowerup();
             powerUps--;
-        }
-        else
-        {
-            return;
+
         }
     }
     char typed = playership.Fire();
@@ -459,7 +457,6 @@ void Game::HandleTyping()
     if ( isValid(target_idx) && !wordships[target_idx].alive )
     {
         target_idx = -1;
-        return;
     }
     totalKeyStrokes++;
     if ( target_idx == -1 )
@@ -702,7 +699,7 @@ int Game::GetTargetWordIdx(char typed)
         if ( wordships[i].word.empty() || !wordships[i].alive )continue;
         Rectangle rect = wordships[i].GetRect();
         if ( rect.y < 0 ) continue;
-        if ( wordships[i].word[0] == typed )
+        if ( wordships[i].word[wordships[i].typedCount] == typed )
         {
             return i;
         }
@@ -767,12 +764,15 @@ void Game::DeleteInactiveBullets()
 }
 void Game::DeleteInactivePowerdUpBullets()
 {
-
     auto it = playership.powerUpBullets.begin();
     while ( it != playership.powerUpBullets.end() )
     {
         if ( !it->active || it->target == nullptr || !it->target->alive )
         {
+            if ( isValid(target_idx) && it->target->word == wordships[target_idx].word )
+            {
+                target_idx = -1;
+            }
             it = playership.powerUpBullets.erase(it);
         }
         else
