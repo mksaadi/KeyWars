@@ -16,28 +16,33 @@ class Game
     void Draw();
     void Update();
     void HandleInput();
+    void Initialize();
     void InitGame();
+    void LoadAssets();
     void HandleTyping();
     void ShowResult(int yOffset);
     void ShowWords(string str, int yOffset);
     void ShowPowerUps();
+    void ShowProgressbar();
     void ActivatePowerup();
     vector<WordShip>CreateWordships();
     enum GameState
     {
         MAIN_MENU,
+        SHOW_NEXT_LEVEL,
         PLAYING,
         LEVEL_COMPLETED,
-        SHOW_NEXT_LEVEL,
         GAME_OVER
     };
     GameState gameState;
     float levelStartTime;
     float levelDelay;
+    float lastDeathTime;
 
-    bool isRunning;
+
     bool canPowerUp;
     bool hasMissTyped;
+    bool shouldClose;
     int powerUps;
     int score;
     int totalKeyStrokes;
@@ -61,10 +66,11 @@ class Game
     void DeleteInactiveBullets();
     void DeleteInactivePowerdUpBullets();
     void DeleteFinishedExplosions();
+    void DeleteInactiveImpacts();
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);
-
-    int LoadHightScore();
+    bool isValid(int idx);
+    int LoadHighScore();
     void SaveHighScore(int curScore);
     vector<WordShip>wordships;
     PlayerShip playership;
@@ -72,4 +78,7 @@ class Game
     Sound explosionSound;
     Sound impactSound;
     Sound errorSound;
+    Sound powerUpSound;
+    Sound levelCompleteSound;
+    Sound gameOverSound;
 };

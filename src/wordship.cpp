@@ -20,19 +20,19 @@ WordShip::WordShip(Font f, Vector2 position, std::string word, int level)
 {
     this->position = position;
     this->word = word;
-    alive = true;
-    speed = 0.2;
-    typedCount = 0;
-    velocity.x = GetRandomValue(-30, 30) / 100.0f;
-    velocity.y = min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
-    cur_target = 0;
-    font = f;
-    horizontalSpeed = GetRandomValue(1, 2);
-    horizontalDirection = GetRandomValue(0, 1) ? 1 : -1;
-    basePosition = position;
-    amplitude = GetRandomValue(10, 20);
-    frequency = GetRandomValue(1, 2);
-    startTime = GetTime();
+    this->alive = true;
+    this->speed = 0.2;
+    this->typedCount = 0;
+    this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
+    this->velocity.y = min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
+    this->cur_target = 0;
+    this->font = f;
+    this->horizontalSpeed = GetRandomValue(1, 2);
+    this->horizontalDirection = GetRandomValue(0, 1) ? 1 : -1;
+    this->basePosition = position;
+    this->amplitude = GetRandomValue(10, 20);
+    this->frequency = GetRandomValue(1, 2);
+    this->startTime = GetTime();
 
 }
 
@@ -50,7 +50,6 @@ void WordShip::Draw(bool isTarget)
     Vector2 drawPos = position;
     std::string typedPart = word.substr(0, typedCount);
     std::string untypedPart = word.substr(typedCount);
-
 
     if ( isTarget )
     {

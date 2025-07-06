@@ -1,23 +1,21 @@
-#include "game.hpp"
-#include <string>
-#include "bullet.hpp"
-#include <iostream>
-#include <fstream>
 #include <map>
 #include <algorithm>
 #include <random>
-#include "raygui.h"
+#include <iostream>
+#include <string>
+
+
+#include "game.hpp"
 #include "playership.hpp"   
-#define PANEL 6
+#include "bullet.hpp"
+#include "impact.hpp"
+#include <fstream>
+
+#include "raygui.h"
+
 
 using namespace std;
 
-vector<string>smallerwords =
-{
-    "go","come","back","not","far","away","chose","rise","wise","lazy","loser","win","lose",
-    "eat","drink","party","live","life","earn","buy","sell","full","empty","full","laugh","right",
-    "wrong","teach","write","read","sleep","reap","sow","left","antiestablishmentarianism"
-};
 
 vector <string>twoLetterWords = {
     "an","he","hi","my","oh","TV","us"
@@ -72,6 +70,7 @@ Game::Game(Font f)
     this->levelStartTime = 0;
     this->levelDelay = 3.0f;
     this->music = LoadMusicStream("Sounds/background_music.ogg");
+    this->shouldClose = false;
     PlayMusicStream(music);
     SetMusicVolume(music, 0.5f);
     InitGame();
@@ -82,11 +81,90 @@ Game::~Game()
     UnloadFont(font);
     UnloadTexture(explosionTexture);
     UnloadTexture(impactTexture);
+    UnloadTexture(powerUpTexture);
     UnloadMusicStream(music);
+    UnloadSound(levelCompleteSound);
+    UnloadSound(explosionSound);
+    UnloadSound(errorSound);
+    UnloadSound(powerUpSound);
+    UnloadSound(gameOverSound);
+}
+
+void Game::Initialize()
+{
+    score = 0;
+    totalKeyStrokes = 0;
+    successfulKeyStrokes = 0;
+    numWordsWithoutMiss = 0;
+    canPowerUp = true;
+    hasMissTyped = false;
+    powerUps = 0;
+    highScore = LoadHighScore();
+    lives = 3;
+    lastDeathTime = 0.0f;
+    level = 1;
+    target_idx = -1;
+    playership.position.x = GetScreenWidth() / 2;
+    playership.position.y = GetScreenHeight() - 100;
+}
+
+
+void Game::LoadAssets()
+{
+    powerUpTexture = LoadTexture("assets/ExplosiveBarrel.png");
+    explosionTexture = LoadTexture("assets/explosion.png");
+    impactTexture = LoadTexture("assets/explosion-sheet.png");
+    explosionSound = LoadSound("Sounds/explosion.ogg");
+    impactSound = LoadSound("Sounds/NenadSimic - Muffled Distant Explosion.wav");
+    errorSound = LoadSound("Sounds/caught.wav");
+    levelCompleteSound = LoadSound("Sounds/newthingget.ogg");
+    powerUpSound = LoadSound("Sounds/Win_sound.wav");
+}
+
+void Game::InitGame()
+{
+    Initialize();
+    LoadAssets();
+    for ( auto& [level, words] : levelWord )
+    {
+        shuffle(words.begin(), words.end(), default_random_engine(GetTime() * 1000));
+    }
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+    GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
+    GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY));
+    GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
 }
 
 void Game::Draw()
 {
+    if ( gameState == GAME_OVER )
+    {
+        ShowResult(50);
+        ShowWords("GAME OVER", 250);
+        const int buttonWidth = 200;
+        const int buttonHeight = 50;
+        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
+        const int y = GetScreenHeight() - 100 - buttonHeight;
+        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
+            playership.alive = true;
+            Initialize();
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+
+        }
+        if ( GuiButton({ ( float )x, ( float )y + 20.0f + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
+            shouldClose = true;
+        }
+
+    }
+    for ( auto& explosion : explosions )
+    {
+        explosion.Draw();
+    }
+    for ( auto& impact : impacts )
+    {
+        impact.Draw();
+    }
     if ( gameState == MAIN_MENU )
     {
         const int buttonWidth = 200;
@@ -100,112 +178,63 @@ void Game::Draw()
             levelStartTime = GetTime();
         }
         if ( GuiButton({ ( float )x, ( float )y + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
-            CloseWindow();
+            shouldClose = true;
         }
         return;
     }
-    else if ( gameState == GAME_OVER )
+    if ( gameState == PLAYING && playership.alive && lives > 0 )
     {
-        // save the highscore
-        if ( score > highScore )
+        playership.Draw();
+        float x = 0 + playership.image.width / 2;
+        float y = GetScreenHeight() - playership.image.height;
+        for ( int i = 0; i + 1 < lives; i++ )
         {
-            SaveHighScore(score);
-            highScore = LoadHightScore();
+            Vector2 pos = { x,y };
+            DrawTextureV(playership.image, pos, WHITE);
+            x += playership.image.width + 10;
         }
-        for ( auto& wordship : wordships )
+        for ( int i = 0; i < ( int )wordships.size(); i++ )
         {
-            wordship.alive = false;
+            bool isTarget = isValid(target_idx) && ( i == target_idx );
+            wordships[i].Draw(isTarget);
         }
-        // show result
 
-        ShowResult(50);
-
-        ShowWords("GAME OVER", 250);
-
-
-        // show the start new game button
-
-        const int buttonWidth = 200;
-        const int buttonHeight = 50;
-        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
-        const int y = GetScreenHeight() - 100 - buttonHeight;
-        if ( GuiButton({ ( float )x, ( float )y, ( float )buttonWidth, ( float )buttonHeight }, "Start New Game") ) {
-            playership.alive = true;
-            playership.position.x = GetScreenWidth() / 2;
-            playership.position.y = GetScreenHeight() - 100;
-            InitGame();
-            gameState = SHOW_NEXT_LEVEL;
-            levelStartTime = GetTime();
+        for ( auto& bullet : playership.bullets )
+        {
+            bullet.Draw();
         }
-        if ( GuiButton({ ( float )x, ( float )y + 20.0f + ( float )70, ( float )buttonWidth,( float )buttonHeight }, "Quit") ) {
-            CloseWindow();
+        for ( auto& bullet : playership.powerUpBullets )
+        {
+            bullet.Draw();
         }
-        return;
+
+
+        ShowPowerUps();
+        ShowProgressbar();
     }
-    else if ( gameState == LEVEL_COMPLETED )
-    {
-        if ( score > highScore )
-        {
-            SaveHighScore(score);
-            highScore = LoadHightScore();
-        }
 
+
+    if ( gameState == LEVEL_COMPLETED )
+    {
         // show score and accuracy
-
         ShowResult(0);
         string str = "LEVEL COMPLETE";
         ShowWords(str, 150);
         return;
     }
-
-
-    playership.Draw();
-    float x = 0 + playership.image.width / 2;
-    float y = GetScreenHeight() - playership.image.height;
-    for ( int i = 0; i + 1 < lives; i++ )
-    {
-        Vector2 pos = { x,y };
-        DrawTextureV(playership.image, pos, WHITE);
-        x += playership.image.width + 10;
-    }
-    for ( int i = 0; i < ( int )wordships.size(); i++ )
-    {
-        wordships[i].Draw(i == target_idx);
-    }
-
-    for ( auto& bullet : playership.bullets )
-    {
-        bullet.Draw();
-    }
-    for ( auto& bullet : playership.powerUpBullets )
-    {
-        bullet.Draw();
-    }
-
-    for ( auto& explosion : explosions )
-    {
-        explosion.Draw();
-    }
-    for ( auto& impact : impacts )
-    {
-        impact.Draw();
-    }
-    ShowPowerUps();
-
-
     if ( gameState == SHOW_NEXT_LEVEL )
     {
         string str = "LEVEL " + to_string(level);
         ShowWords(str, 0);
+        return;
     }
-
-
 
 }
 
 void Game::Update()
 {
     UpdateMusicStream(music);
+
     for ( auto& bullet : playership.bullets )
     {
         bullet.Update();
@@ -214,26 +243,64 @@ void Game::Update()
     {
         bullet.Update();
     }
-    for ( auto& explosion : explosions )
-    {
-        explosion.Update();
-    }
     for ( auto& impact : impacts )
     {
         impact.Update();
     }
+    for ( auto& explosion : explosions )
+    {
+        explosion.Update();
+    }
+    for ( auto& word : wordships )
+    {
+        word.Move();
+    }
+    DeleteInactiveBullets();
+    DeleteInactivePowerdUpBullets();
+    DeleteInactiveWordShips();
+    DeleteFinishedExplosions();
+    DeleteInactiveImpacts();
+    HandleTyping();
+    CheckCollisions();
+
+
+    if ( gameState == PLAYING && !playership.alive )
+    {
+        if ( lives > 0 )
+        {
+            if ( GetTime() - lastDeathTime > 0.5f )
+            {
+                playership.alive = true;
+                playership.position.x = GetScreenWidth() / 2;
+                playership.position.y = GetScreenHeight() - 100;
+            }
+        }
+        else
+        {
+            for ( auto& wordship : wordships )
+            {
+                wordship.alive = false;
+            }
+            gameState = GAME_OVER;
+            return;
+        }
+
+    }
     if ( gameState == GAME_OVER )
     {
-        cout << "GAME OVER\n";
         return;
     }
     if ( gameState == PLAYING && wordships.empty() )
     {
-        cout << "Level Completed\n";
+        PlaySound(levelCompleteSound);
         if ( numWordsWithoutMiss >= level * 5 )
         {
             score += ( level * 10 );
-            std::cout << "Bonus Achieved!!!\n";
+        }
+        if ( score > highScore )
+        {
+            SaveHighScore(score);
+            highScore = LoadHighScore();
         }
         gameState = LEVEL_COMPLETED;
         levelStartTime = GetTime();
@@ -241,13 +308,13 @@ void Game::Update()
     }
     if ( gameState == LEVEL_COMPLETED )
     {
-
         if ( GetTime() - levelStartTime > levelDelay )
         {
             level++;
             canPowerUp = true;
             hasMissTyped = false;
             numWordsWithoutMiss = 0;
+            target_idx = -1;
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
@@ -261,84 +328,59 @@ void Game::Update()
             wordships = CreateWordships();
             gameState = PLAYING;
         }
-        return;
     }
-    for ( auto& word : wordships )
-    {
-        word.Move();
-    }
-
-    HandleTyping();
-    DeleteInactiveBullets();
-    DeleteInactivePowerdUpBullets();
-    DeleteInactiveWordShips();
-    DeleteFinishedExplosions();
-    CheckCollisions();
 }
 
 void Game::CheckCollisions()
 {
-    if ( target_idx != -1 )
+    if ( wordships.empty() )
     {
-        // bullets vs wordships
+        target_idx = -1;
+        return;
+    }
+    if ( gameState == GAME_OVER )
+    {
+        target_idx = -1;
+        return;
+    }
+    // bullets vs wordships
+    if ( isValid(target_idx) )
+    {
         for ( auto& bullet : playership.bullets )
         {
             if ( CheckCollisionRecs(bullet.GetRect(), wordships[target_idx].GetRect()) )
             {
-                bullet.active = false;
                 Vector2 hitPos = bullet.position;
                 impacts.emplace_back(&impactTexture, hitPos);
+                bullet.active = false;
                 PlaySound(impactSound);
             }
         }
     }
 
     //wordships vs powered up bullets
+
     for ( auto& bullet : playership.powerUpBullets )
     {
         if ( !bullet.active )continue;
-        for ( auto& wordship : wordships )
+        if ( bullet.target && bullet.target->alive )
         {
-            if ( CheckCollisionRecs(bullet.GetRect(), wordship.GetRect()) )
+            if ( CheckCollisionRecs(bullet.GetRect(), bullet.target ->GetRect()) )
             {
-                wordship.alive = false;
-                bullet.active = false;
-                Vector2 explosionPos = wordship.GetCenter();
+                Vector2 explosionPos = bullet.target->GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
+                bullet.target->alive = false;
+                bullet.active = false;
                 PlaySound(explosionSound);
-                break;
             }
         }
     }
 
-    // wordship vs playership
-    for ( auto& wordship : wordships )
-    {
-        if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
-        {
 
-            playership.alive = false;
-            wordship.alive = false;
-            lives--;
-            // trigger explosion
-            Vector2 explosionPos = { playership.position.x + playership.image.width / 2,playership.position.y };
-            explosions.emplace_back(&explosionTexture, explosionPos);
-            PlaySound(explosionSound);
-            if ( lives == 0 )
-            {
-                isRunning = false;
-                gameState = GAME_OVER;
-            }
-            else
-            {
-                playership.alive = true;
-            }
-        }
-    }
     // wordship vs wordship
-    for ( int i = 0; i < wordships.size(); i++ )
+    for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
-        for ( int j = i + 1; j < wordships.size(); j++ )
+        for ( int j = i + 1; j < ( int )wordships.size(); j++ )
         {
             if ( CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) )
             {
@@ -368,10 +410,37 @@ void Game::CheckCollisions()
         }
     }
 
+    // wordship vs playership
+    if ( !playership.alive )return;
+
+    for ( auto& wordship : wordships )
+    {
+        if ( !wordship.alive )continue;
+        if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
+        {
+            lastDeathTime = GetTime();
+            wordship.alive = false;
+            // trigger explosion
+            Vector2 explosionPos = { playership.position.x + playership.image.width / 2,playership.position.y };
+            explosions.emplace_back(&explosionTexture, explosionPos);
+            PlaySound(explosionSound);
+            playership.alive = false;
+            lives--;
+        }
+    }
+
+}
+
+bool Game::isValid(int idx)
+{
+    if ( idx < 0 || idx >= ( int )wordships.size() )return false;
+    return ( wordships[idx].alive );
 }
 
 void Game::HandleTyping()
 {
+    if ( gameState != PLAYING || lives <= 0 || !playership.alive || wordships.empty() )return;
+
     if ( ( IsKeyDown(KEY_TAB) && IsKeyPressed(KEY_ENTER) ) )
     {
         if ( powerUps > 0 )
@@ -379,32 +448,24 @@ void Game::HandleTyping()
             ActivatePowerup();
             powerUps--;
         }
+        else
+        {
+            return;
+        }
     }
     char typed = playership.Fire();
     if ( typed == '\0' )return;
 
-    if ( wordships.empty() )
-    {
-        if ( numWordsWithoutMiss >= level * 5 )
-        {
-            score += 100;
-            std::cout << "Bonus Achieved!!!\n";
-        }
-        std::cout << "Level Completed\n";
-        gameState = LEVEL_COMPLETED;
-        levelStartTime = GetTime();
-
-        return;
-    }
-    if ( target_idx == -1 && !wordships[target_idx].alive )
+    if ( isValid(target_idx) && !wordships[target_idx].alive )
     {
         target_idx = -1;
+        return;
     }
     totalKeyStrokes++;
     if ( target_idx == -1 )
     {
         target_idx = GetTargetWordIdx(typed);
-        if ( target_idx != -1 )
+        if ( isValid(target_idx) )
         {
             if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
             {
@@ -425,18 +486,16 @@ void Game::HandleTyping()
                     if ( !hasMissTyped )
                     {
                         ++numWordsWithoutMiss;
-                        std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
                         if ( numWordsWithoutMiss >= ( level + 4 + ( level / 2 ) ) && canPowerUp )
                         {
                             powerUps++;
+                            PlaySound(powerUpSound);
                             canPowerUp = false;
-                            std::cout << "PowerUps = " << powerUps << "\n";
                         }
                     }
                     hasMissTyped = false;
                     wordships[target_idx].alive = false;
                     target_idx = -1;
-
                 }
             }
             else
@@ -449,7 +508,7 @@ void Game::HandleTyping()
     }
     else
     {
-        if ( wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
+        if ( isValid(target_idx) && wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
         {
             score++;
             successfulKeyStrokes++;
@@ -461,7 +520,7 @@ void Game::HandleTyping()
             Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
             playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f, false));
 
-            if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
+            if ( isValid(target_idx) && wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
                 Vector2 explosionPos = wordships[target_idx].GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
@@ -469,12 +528,11 @@ void Game::HandleTyping()
                 if ( !hasMissTyped )
                 {
                     ++numWordsWithoutMiss;;
-                    std::cout << "Number of words wihtout Miss = " << numWordsWithoutMiss << "\n";
                     if ( numWordsWithoutMiss >= ( level + 4 + ( level / 2 ) ) && canPowerUp )
                     {
                         powerUps++;
+                        PlaySound(powerUpSound);
                         canPowerUp = false;
-                        std::cout << "PowerUps = " << powerUps << "\n";
                     }
                 }
                 hasMissTyped = false;
@@ -563,25 +621,74 @@ void Game::ShowPowerUps()
 {
     float x = GetScreenWidth() - powerUpTexture.width - 5;
     float y = GetScreenHeight() - powerUpTexture.height;
-    DrawTextureV(powerUpTexture, { x,y }, WHITE);
+    if ( powerUps > 0 )
+    {
+        float t = GetTime();
+        float scale = 1.0f + 0.1f * sin(t * 6);
+        float iconWidth = powerUpTexture.width;
+        float iconHeight = powerUpTexture.height;
+
+        float centerX = x + iconWidth / 2;
+        float centerY = y + iconHeight / 2;
+        Rectangle dest =
+        {
+            centerX,
+            centerY,
+            iconWidth * scale,
+            iconHeight * scale
+        };
+        Vector2 origin = { iconWidth * scale / 2,iconHeight * scale / 2 };
+        DrawTexturePro(
+            powerUpTexture,
+            { 0,0,iconWidth,iconHeight },
+            dest,
+            origin,
+            0.0f,
+            WHITE
+        );
+
+    }
+    else
+    {
+        DrawTextureV(powerUpTexture, { x,y }, WHITE);
+    }
     x -= 10;
     DrawText(to_string(powerUps).c_str(), x, y, 30, WHITE);
+
+}
+
+void Game::ShowProgressbar()
+{
+    float progress = ( float )numWordsWithoutMiss;
+    float progressGoal = ( float )level + ( level / 2 ) + 4;
+    float barWidth = 300;
+    float barHeight = 20;
+    float barX = GetScreenWidth() / 2.0f - barWidth / 2.0f;
+    float barY = GetScreenHeight() - 50;
+    Rectangle progressBarRect = { barX,barY,barWidth,barHeight };
+
+    GuiProgressBar(progressBarRect, NULL, NULL, &progress, 0.0f, progressGoal);
+
 }
 
 void Game::ActivatePowerup()
 {
     int target = 0;
-    for ( int i = 0; i < level && target < wordships.size(); i++ )
+    Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+    for ( int i = 0; i < level && target < ( int )wordships.size(); i++ )
     {
-        Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-        while ( target < wordships.size() && !wordships[target].alive )
+        while ( target < ( int )wordships.size() && !wordships[target].alive )
         {
             target++;
         }
-        if ( target < wordships.size() )
+        if ( target < ( int )wordships.size() && wordships[target].alive )
         {
             playership.powerUpBullets.push_back(Bullet(shipCenter, &wordships[target], 30.0f, true));
             target++;
+            if ( target >= ( int )wordships.size() )
+            {
+                return;
+            }
         }
     }
 }
@@ -589,6 +696,7 @@ void Game::ActivatePowerup()
 
 int Game::GetTargetWordIdx(char typed)
 {
+
     for ( int i = ( int )wordships.size() - 1; i >= 0; i-- )
     {
         if ( wordships[i].word.empty() || !wordships[i].alive )continue;
@@ -602,25 +710,32 @@ int Game::GetTargetWordIdx(char typed)
     return -1;
 }
 
-int Game::LoadHightScore()
+
+int Game::LoadHighScore()
 {
     int prevHighScore = 0;
     ifstream highScoreFile("highscore.txt");
+
     if ( highScoreFile.is_open() )
     {
-        highScoreFile >> prevHighScore;
+        if ( !( highScoreFile >> prevHighScore ) )
+        {
+            cerr << "Invalid highscore format. Resetting to 0.\n";
+            prevHighScore = 0;
+        }
         highScoreFile.close();
     }
     else
     {
         cerr << "Failed to load highscore from file\n";
     }
+
     return prevHighScore;
 }
 
 void Game::SaveHighScore(int curScore)
 {
-    ofstream highscoreFile("highscore.txt");
+    ofstream highscoreFile("highscore.txt", ios::out | ios::trunc);
     if ( highscoreFile.is_open() )
     {
         highscoreFile << curScore;
@@ -628,10 +743,9 @@ void Game::SaveHighScore(int curScore)
     }
     else
     {
-        cerr << "Failed to load highscore to file\n";
+        cerr << "Failed to save highscore to file\n";
     }
 }
-
 
 void Game::DeleteInactiveBullets()
 {
@@ -639,7 +753,7 @@ void Game::DeleteInactiveBullets()
     auto it = playership.bullets.begin();
     while ( it != playership.bullets.end() )
     {
-        if ( !it->active )
+        if ( !it->active || it->target == nullptr || !it->target->alive )
         {
             it = playership.bullets.erase(it);
         }
@@ -648,13 +762,16 @@ void Game::DeleteInactiveBullets()
             ++it;
         }
     }
+
+
 }
 void Game::DeleteInactivePowerdUpBullets()
 {
+
     auto it = playership.powerUpBullets.begin();
     while ( it != playership.powerUpBullets.end() )
     {
-        if ( !it->active )
+        if ( !it->active || it->target == nullptr || !it->target->alive )
         {
             it = playership.powerUpBullets.erase(it);
         }
@@ -663,25 +780,22 @@ void Game::DeleteInactivePowerdUpBullets()
             ++it;
         }
     }
+
+
 }
 
 void Game::DeleteInactiveWordShips()
 {
+
     auto it = wordships.begin();
     while ( it != wordships.end() )
     {
-        bool targeted = false;
-        for ( auto& bullet : playership.bullets )
+        if ( !it->alive )
         {
-            if ( bullet.active && bullet.target == &( *it ) )
+            if ( isValid(target_idx) && wordships[target_idx].word == it->word )
             {
-                targeted = true;
-                break;
+                target_idx = -1;
             }
-        }
-
-        if ( !it->alive && !targeted )
-        {
             it = wordships.erase(it);
         }
         else
@@ -693,6 +807,7 @@ void Game::DeleteInactiveWordShips()
 
 void Game::DeleteFinishedExplosions()
 {
+
     auto it = explosions.begin();
     while ( it != explosions.end() )
     {
@@ -705,44 +820,31 @@ void Game::DeleteFinishedExplosions()
             ++it;
         }
     }
+
+
+}
+
+void Game::DeleteInactiveImpacts()
+{
+    auto it = impacts.begin();
+    while ( it != impacts.end() )
+    {
+        if ( it->isFinished() )
+        {
+            it = impacts.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+
 }
 
 void Game::HandleInput()
 {
-    playership.Move();
-}
-
-void Game::InitGame()
-{
-    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-    GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-    GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY));
-    GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(LIGHTGRAY));
-    score = 0;
-    totalKeyStrokes = 0;
-    successfulKeyStrokes = 0;
-    numWordsWithoutMiss = 0;
-    canPowerUp = true;
-    hasMissTyped = false;
-    powerUps = 0;
-    highScore = LoadHightScore();
-    isRunning = true;
-    lives = 3;
-    level = 1;
-    target_idx = -1;
-    playership.position.x = GetScreenWidth() / 2;
-    playership.position.y = GetScreenHeight() - 100;
-    wordships = CreateWordships();
-    powerUpTexture = LoadTexture("assets/ExplosiveBarrel.png");
-    explosionTexture = LoadTexture("assets/explosion.png");
-    impactTexture = LoadTexture("assets/explosion-sheet.png");
-    explosionSound = LoadSound("Sounds/explosion.ogg");
-    impactSound = LoadSound("Sounds/NenadSimic - Muffled Distant Explosion.wav");
-    errorSound = LoadSound("Sounds/caught.wav");
-    for ( auto& [level, words] : levelWord )
-    {
-        shuffle(words.begin(), words.end(), default_random_engine(GetTime() * 1000));
-    }
+    if ( playership.alive ) playership.Move();
 }
 
 
@@ -762,7 +864,8 @@ std::vector<WordShip> Game::CreateWordships()
             wordPool.push_back(levelWord[word_level][i]);
         }
         ship_added += num_current_level_words;
-        word_level++;
+        if ( word_level < 10 )word_level++;
+
     }
     std::shuffle(wordPool.begin(), wordPool.end(), std::default_random_engine(GetTime() * 1000));
 

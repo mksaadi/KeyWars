@@ -7,9 +7,6 @@ using namespace std;
 
 #include "game.hpp"
 
-
-
-
 int main()
 {
     InitWindow(1920, 1080, "KeyWars");
@@ -33,7 +30,8 @@ int main()
 
 
     Game game(font);
-    while ( !WindowShouldClose() )
+
+    while ( !WindowShouldClose() && !game.shouldClose )
     {
         BeginDrawing();
         UpdateBackground();
