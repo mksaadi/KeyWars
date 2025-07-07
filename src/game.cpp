@@ -97,6 +97,10 @@ Game::~Game()
 void Game::Initialize()
 {
     score = 0;
+    wordTyped = 0;
+    timeSpentTyping = 0;
+    typingStartTime = 0;
+    wpm = 0;
     totalKeyStrokes = 0;
     successfulKeyStrokes = 0;
     numWordsWithoutMiss = 0;
@@ -149,7 +153,7 @@ void Game::Draw()
         const int buttonHeight = 50;
         const int x = GetScreenWidth() / 2 - buttonWidth / 2;
         const int y = GetScreenHeight() - 100 - buttonHeight;
-        Rectangle startBtn = { x,y,buttonWidth,buttonHeight };
+        Rectangle startBtn = { ( float )x,( float )y,( float )buttonWidth,( float )buttonHeight };
         Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
 
 
@@ -223,8 +227,8 @@ void Game::Draw()
         const int y = GetScreenHeight() / 2 - buttonHeight;
         DrawText("KEYWARS", GetScreenWidth() / 2 - MeasureText("KEYWARS", 60) / 2, 100, 60, WHITE);
 
-        Rectangle startBtn = { x,y,buttonWidth,buttonHeight };
-        Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
+        Rectangle startBtn = { ( float )x,( float )y,( float )buttonWidth,( float )buttonHeight };
+        Rectangle quitBtn = { ( float )x,( float )y + 70.0f,( float )buttonWidth,( float )buttonHeight };
 
 
         Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
@@ -405,6 +409,8 @@ void Game::Update()
             highScore = LoadHighScore();
         }
         gameState = LEVEL_COMPLETED;
+        timeSpentTyping += ( GetTime() - typingStartTime );
+        typingStartTime = -1;
         levelStartTime = GetTime();
         return;
     }
@@ -412,6 +418,11 @@ void Game::Update()
     {
         if ( GetTime() - levelStartTime > levelDelay )
         {
+            if ( score > highScore )
+            {
+                SaveHighScore(score);
+                highScore = LoadHighScore();
+            }
             level++;
             canPowerUp = true;
             hasMissTyped = false;
@@ -426,8 +437,14 @@ void Game::Update()
     {
         if ( GetTime() - levelStartTime > 1.5f )
         {
+            if ( score > highScore )
+            {
+                SaveHighScore(score);
+                highScore = LoadHighScore();
+            }
             target_idx = -1;
             wordships = CreateWordships();
+            cout << "Words = " << wordships.size() << "\n";
             gameState = PLAYING;
         }
     }
@@ -452,7 +469,7 @@ void Game::CheckCollisions()
         {
             if ( CheckCollisionRecs(bullet.GetRect(), bullet.target->GetRect()) )
             {
-                Vector2 hitPos = bullet.position;
+                Vector2 hitPos = bullet.target->GetCenter();
                 impacts.emplace_back(&impactTexture, hitPos);
                 bullet.active = false;
                 PlaySound(impactSound);
@@ -520,6 +537,7 @@ void Game::CheckCollisions()
     // wordship vs playership
     for ( auto& wordship : wordships )
     {
+        if ( !wordship.alive ) continue;
         if ( CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
         {
             lastDeathTime = GetTime();
@@ -580,6 +598,10 @@ void Game::HandleTyping()
         target_idx = -1;
     }
     totalKeyStrokes++;
+    if ( typingStartTime == -1 )
+    {
+        typingStartTime = GetTime();
+    }
     if ( target_idx == -1 )
     {
         target_idx = GetTargetWordIdx(typed);
@@ -591,13 +613,14 @@ void Game::HandleTyping()
                 successfulKeyStrokes++;
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-                playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f, false));
+                playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 40.0f, false));
 
                 wordships[target_idx].typedCount++;
 
                 if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
                 {
                     // trigger explosion
+                    wordTyped ++;
                     Vector2 explosionPos = wordships[target_idx].GetCenter();
                     explosions.emplace_back(&explosionTexture, explosionPos);
                     PlaySound(explosionSound);
@@ -636,10 +659,11 @@ void Game::HandleTyping()
             // matched. So fire a bullet towards the wordship
 
             Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-            playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 20.0f, false));
+            playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 40.0f, false));
 
             if ( isValid(target_idx) && wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
+                wordTyped ++;
                 Vector2 explosionPos = wordships[target_idx].GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
                 PlaySound(explosionSound);
@@ -683,9 +707,9 @@ void Game::ShowResult(int yOffset)
 
     // Panel size and position
     float cardWidth = 300;
-    float cardHeight = 200;
+    float cardHeight = 300;
     float cardX = GetScreenWidth() / 2.0f - cardWidth / 2.0f;
-    float cardY = ( GetScreenHeight() / 2.0f - cardHeight / 2.0f ) - yOffset;
+    float cardY = ( GetScreenHeight() / 2.0f - cardHeight / 2.0f ) + 100 - yOffset;
     Rectangle cardRect = { cardX, cardY, cardWidth, cardHeight };
     GuiPanel(cardRect, "");
 
@@ -695,15 +719,20 @@ void Game::ShowResult(int yOffset)
     string accuracyStr = "Accuracy: " + to_string(acc) + "%";
     string highScoreStr = "High Score : " + to_string(highScore);
 
+    // wpm
+
+    wpm = ( wordTyped * 60 ) / timeSpentTyping;
+    string wpmStr = "WPM:" + to_string(wpm);
 
     float padding = 20;
     Vector2 scorePos = { cardX + padding, cardY + padding + 20 };
     Vector2 highScorePos = { cardX + padding, cardY + padding + 80 };
     Vector2 accPos = { cardX + padding, cardY + padding + 140 };
-
+    Vector2 wpmPos = { cardX + padding, cardY + padding + 200 };
     GuiLabel({ scorePos.x, scorePos.y, cardWidth - 2 * padding, 30 }, scoreStr.c_str());
     GuiLabel({ highScorePos.x, highScorePos.y, cardWidth - 2 * padding, 30 }, highScoreStr.c_str());
     GuiLabel({ accPos.x, accPos.y, cardWidth - 2 * padding, 30 }, accuracyStr.c_str());
+    GuiLabel({ wpmPos.x, wpmPos.y, cardWidth - 2 * padding, 30 }, wpmStr.c_str());
 
     // Restore previous styles
     GuiSetStyle(DEFAULT, TEXT_SIZE, prevTextSize);
@@ -777,6 +806,10 @@ void Game::ShowPowerUps()
 
 void Game::ShowProgressbar()
 {
+    if ( !canPowerUp )
+    {
+        return;
+    }
     float progress = ( float )numWordsWithoutMiss;
     float progressGoal = ( float )level + ( level / 2 ) + 4;
     float barWidth = 300;
@@ -785,13 +818,12 @@ void Game::ShowProgressbar()
     float barY = GetScreenHeight() - 50;
     Rectangle progressBarRect = { barX,barY,barWidth,barHeight };
 
-    GuiProgressBar(progressBarRect, NULL, NULL, &progress, 0.0f, progressGoal);
+    GuiProgressBar(progressBarRect, "Power Up", NULL, &progress, 0.0f, progressGoal);
 
 }
 
 void Game::ActivatePowerup()
 {
-    int target = 0;
     Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
     vector<pair<float, WordShip*>>targets;
     for ( auto& wordship : wordships )
@@ -807,22 +839,30 @@ void Game::ActivatePowerup()
     for ( int i = 0; i < min(level, ( int )targets.size()); i++ )
     {
         WordShip* targetShip = targets[i].second;
-        playership.powerUpBullets.push_back(Bullet(shipCenter, targetShip, 30.0f, true));
+        playership.powerUpBullets.push_back(Bullet(shipCenter, targetShip, 50.0f, true));
     }
 }
 
 
 int Game::GetTargetWordIdx(char typed)
 {
-
-    for ( int i = ( int )wordships.size() - 1; i >= 0; i-- )
+    Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+    vector<pair<float, int>>targets;
+    for ( int i = 0; i < wordships.size(); i++ )
     {
-        if ( wordships[i].word.empty() || !wordships[i].alive )continue;
-        Rectangle rect = wordships[i].GetRect();
+        float distance = Vector2Distance(shipCenter, wordships[i].GetCenter());
+        targets.push_back({ distance,i });
+    }
+    sort(targets.begin(), targets.end());
+
+    for ( int i = 0; i < ( int )targets.size(); i++ )
+    {
+        if ( wordships[targets[i].second].word.empty() || !wordships[targets[i].second].alive )continue;
+        Rectangle rect = wordships[targets[i].second].GetRect();
         if ( rect.y < 0 ) continue;
-        if ( wordships[i].word[wordships[i].typedCount] == typed )
+        if ( wordships[targets[i].second].word[wordships[targets[i].second].typedCount] == typed )
         {
-            return i;
+            return targets[i].second;
         }
     }
     return -1;

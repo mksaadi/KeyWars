@@ -47,6 +47,10 @@ class Game
     bool isPaused;
     int powerUps;
     int score;
+    int wordTyped;
+    int timeSpentTyping;
+    int typingStartTime;
+    int wpm;
     int totalKeyStrokes;
     int successfulKeyStrokes;
     int numWordsWithoutMiss;
