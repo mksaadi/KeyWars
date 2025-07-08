@@ -500,7 +500,7 @@ void Game::Update()
                 int posX = GetScreenWidth() / 2;
                 int posY = - 10;
                 Vector2 pos = { posX,posY };
-                wordships.push_back(WordShip(font, pos, boss_word, level, true));
+                wordships.push_back(WordShip(font, pos, boss_word, level, true, false, playership.position));
                 bossCreated = true;
             }
 
@@ -590,6 +590,11 @@ void Game::CheckCollisions()
                     target_idx = -1;
                 }
                 bullet.target->alive = false;
+                if ( bullet.target->isBoss )
+                {
+                    bossIsDead = true;
+                    CreateMiniWordShips(bullet.target->position, level);
+                }
                 bullet.active = false;
             }
         }
@@ -599,6 +604,7 @@ void Game::CheckCollisions()
     // wordship vs wordship
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
+
         for ( int j = i + 1; j < ( int )wordships.size(); j++ )
         {
             if ( CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) )
@@ -618,12 +624,21 @@ void Game::CheckCollisions()
                     }
                     else
                     {
-                        wordships[i].position.y -= overlapY / 2;
-                        wordships[j].position.y += overlapY / 2;
+                        if ( !wordships[i].isMinionShip )
+                        {
+                            wordships[i].position.y -= overlapY / 2;
+                        }
+                        if ( !wordships[j].isMinionShip )
+                        {
+                            wordships[j].position.y += overlapY / 2;
+                        }
                     }
 
-                    swap(wordships[i].velocity.x, wordships[j].velocity.x);
-                    swap(wordships[i].velocity.y, wordships[j].velocity.y);
+                    if ( !wordships[i].isMinionShip && !wordships[j].isMinionShip )
+                    {
+                        swap(wordships[i].velocity.x, wordships[j].velocity.x);
+                        swap(wordships[i].velocity.y, wordships[j].velocity.y);
+                    }
                 }
             }
         }
@@ -1149,13 +1164,13 @@ std::vector<WordShip> Game::CreateWordships()
         float word_width = MeasureTextEx(font, wordPool[i].c_str(), 50, 2).x + 20;
         if ( posx + word_width < GetScreenWidth() )
         {
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false, false, playership.position));
         }
         else
         {
             posx = 0;
             posy -= word_height;
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false, false, playership.position));
         }
         posx += word_width;
         posx += spacing;
@@ -1171,7 +1186,7 @@ void Game::CreateMiniWordShips(Vector2 position, int level)
     int idx = GetRandomValue(0, 25 - num_words);
     for ( int i = 0; i < num_words; i++ )
     {
-        wordships.push_back(WordShip(font, position, oneLetterWords[( i + idx ) % 26], level, false));
+        wordships.push_back(WordShip(font, position, oneLetterWords[( i + idx ) % 26], level, false, true, playership.position));
     }
 }
 

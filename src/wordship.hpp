@@ -6,7 +6,8 @@ class WordShip
 {
     public:
     WordShip();
-    WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss);
+    WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss, bool isMinionShip, Vector2 playership_position);
+
     ~WordShip();
     void Draw(bool isTarget);
     void Move();
@@ -18,6 +19,7 @@ class WordShip
     float speed;
     bool alive;
     bool isBoss;
+    bool isMinionShip;
     int cur_target;
     int typedCount;
     char target_char;
@@ -27,6 +29,7 @@ class WordShip
     float frequency;
     float startTime;
     Vector2 basePosition;
+    Vector2 playership_position;
 
     private:
     Font font;

@@ -1,8 +1,9 @@
 #include <bits/stdc++.h>
+#include "raylib.h"
+#include "raymath.h"
 #include "wordship.hpp"
 #include <vector>
 #include <string>
-using namespace std;
 
 
 WordShip::WordShip()
@@ -16,16 +17,27 @@ WordShip::WordShip()
     font = GetFontDefault();
 }
 
-WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss)
+WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss, bool isMinionShip, Vector2 playership_position)
 {
+    Vector2 direction = Vector2Subtract(playership_position, position);
     this->position = position;
+    this->playership_position = playership_position;
     this->word = word;
     this->isBoss = isBoss;
+    this->isMinionShip = isMinionShip;
     this->alive = true;
-    this->speed = 0.2;
+    if ( isMinionShip )
+    {
+        this->speed = 2.0;
+        this->velocity = { 0.0f,speed };
+    }
+    else
+    {
+        this->speed = 0.2;
+        this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
+        this->velocity.y = std::min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
+    }
     this->typedCount = 0;
-    this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
-    this->velocity.y = min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
     this->cur_target = 0;
     this->font = f;
     this->horizontalSpeed = GetRandomValue(1, 2);
@@ -34,7 +46,6 @@ WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool i
     this->amplitude = GetRandomValue(10, 20);
     this->frequency = GetRandomValue(1, 2);
     this->startTime = GetTime();
-
 }
 
 
