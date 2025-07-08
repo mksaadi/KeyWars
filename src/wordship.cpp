@@ -16,10 +16,11 @@ WordShip::WordShip()
     font = GetFontDefault();
 }
 
-WordShip::WordShip(Font f, Vector2 position, std::string word, int level)
+WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss)
 {
     this->position = position;
     this->word = word;
+    this->isBoss = isBoss;
     this->alive = true;
     this->speed = 0.2;
     this->typedCount = 0;
@@ -46,6 +47,10 @@ void WordShip::Draw(bool isTarget)
 {
     if ( !alive )return;
     float fontSize = 30;
+    if ( isBoss )
+    {
+        fontSize = 40;
+    }
     float spacing = 2;
     Vector2 drawPos = position;
     std::string typedPart = word.substr(0, typedCount);

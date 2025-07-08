@@ -6,7 +6,7 @@ class WordShip
 {
     public:
     WordShip();
-    WordShip(Font f, Vector2 position, std::string word, int level);
+    WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss);
     ~WordShip();
     void Draw(bool isTarget);
     void Move();
@@ -17,6 +17,7 @@ class WordShip
     Vector2 velocity;
     float speed;
     bool alive;
+    bool isBoss;
     int cur_target;
     int typedCount;
     char target_char;

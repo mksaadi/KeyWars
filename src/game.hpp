@@ -26,6 +26,7 @@ class Game
     void ShowProgressbar();
     void ActivatePowerup();
     vector<WordShip>CreateWordships();
+    void CreateMiniWordShips(Vector2 position, int level);
     enum GameState
     {
         MAIN_MENU,
@@ -45,6 +46,8 @@ class Game
     bool hasMissTyped;
     bool shouldClose;
     bool isPaused;
+    bool bossCreated;
+    bool bossIsDead;
     int powerUps;
     int score;
     int wordTyped;

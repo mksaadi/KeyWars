@@ -17,6 +17,9 @@
 
 using namespace std;
 
+vector<string>oneLetterWords = {
+    "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"
+};
 
 vector <string>twoLetterWords = {
     "an","he","hi","my","oh","TV","us"
@@ -50,6 +53,54 @@ vector<string>elavenLetterWords = {
 "Afghanistan","architecture","arrangement","biologically","broadcasting","calligraphy","caterpillar","colorfulness","communicate","communication","confectioner","consumption","convenience","countryside","deforestation","desertification","destruction","destructive","development","disappointed","discrimination","educational","electricity","embarrassed","environment","environmental","examination","extinguisher","furthermore","grandfather","grandmother","grandparent","hairstylist","handcrafted","handkerchief","harmoniously","illustration","imagination","independence","information","infrastructure","institution","instruction","interdependent","interesting","international","internationally","manufacturer","opportunity","overhunting","partnership","performance","personality","photographer","photography","polyurethane","prehistoric","presentation","recommended","relationship","reservation","responsible","seventeenth","snowboarding","stomachache","subtropical","supermarket","supervision","sustainable","thunderstorm","timekeeping","traditional","transportation",
 };
 
+// boss level words
+vector<string> twelveLetterWords = {
+    "considerable", "extraordinary", "unbelievable", "unemployment",
+    "overextended", "inflammation", "contradicted", "relationship"
+};
+
+vector<string> thirteenLetterWords = {
+    "consideration", "multinational", "underestimate", "consciousness",
+    "understanding", "questionnaire", "transformation"
+};
+
+vector<string> fourteenLetterWords = {
+    "misunderstand", "thermodynamic", "interdependent", "uncontrollably",
+    "counterattack", "representative", "photosynthesis"
+};
+
+vector<string> fifteenLetterWords = {
+    "disappointment", "congratulations", "consciousnesses",
+    "disorganization", "misinformation", "underprivileged"
+};
+
+vector<string> sixteenLetterWords = {
+    "anthropological", "counterproductive", "intercontinental",
+    "oversimplifying", "environmentalist"
+};
+
+vector<string> seventeenLetterWords = {
+    "institutionalized", "counterintuitive", "individualization",
+    "disenfranchising"
+};
+
+vector<string> eighteenLetterWords = {
+    "misinterpretation", "overspecification", "overcomplication",
+    "differentiations"
+};
+
+vector<string> nineteenLetterWords = {
+    "disenfranchisement", "hyperintellectuals", "commercialization"
+};
+
+vector<string> twentyLetterWords = {
+    "mischaracterization", "internationalization", "overindustrialization"
+};
+
+vector<string> veryLongWords = {
+    "counterrevolutionaries", "overintellectualizing", "antidisestablishmentarianism" // 28 letters
+};
+
 map<int, vector<string>>levelWord =
 {
     {1,twoLetterWords},
@@ -63,6 +114,21 @@ map<int, vector<string>>levelWord =
     {9,tenLetterWords},
     {10,elavenLetterWords},
 };
+
+map<int, vector<string>>bossLevelWord =
+{
+    {1,twelveLetterWords},
+    {2,thirteenLetterWords},
+    {3,fourteenLetterWords},
+    {4,fifteenLetterWords},
+    {5,sixteenLetterWords},
+    {6,seventeenLetterWords},
+    {7,eighteenLetterWords},
+    {8,nineteenLetterWords},
+    {9,twentyLetterWords},
+    {10,veryLongWords},
+};
+
 
 Game::Game(Font f)
 {
@@ -96,6 +162,8 @@ Game::~Game()
 
 void Game::Initialize()
 {
+    bossIsDead = false;
+    bossCreated = false;
     score = 0;
     wordTyped = 0;
     timeSpentTyping = 0;
@@ -137,6 +205,8 @@ void Game::InitGame()
     {
         shuffle(words.begin(), words.end(), default_random_engine(GetTime() * 1000));
     }
+    shuffle(oneLetterWords.begin(), oneLetterWords.end(), default_random_engine(GetTime() * 1000));
+
     GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
     GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
     GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(DARKGRAY));
@@ -387,6 +457,7 @@ void Game::Update()
         }
         else
         {
+
             for ( auto& wordship : wordships )
             {
                 wordship.alive = false;
@@ -398,21 +469,44 @@ void Game::Update()
     }
     if ( gameState == PLAYING && wordships.empty() )
     {
-        PlaySound(levelCompleteSound);
-        if ( numWordsWithoutMiss >= level * 5 )
+        if ( bossIsDead )
         {
-            score += ( level * 10 );
+            PlaySound(levelCompleteSound);
+            if ( numWordsWithoutMiss >= level * 5 )
+            {
+                score += ( level * 10 );
+            }
+            if ( score > highScore )
+            {
+                SaveHighScore(score);
+                highScore = LoadHighScore();
+            }
+            bossIsDead = false;
+            bossCreated = false;
+            gameState = LEVEL_COMPLETED;
+            timeSpentTyping += ( GetTime() - typingStartTime );
+            typingStartTime = -1;
+            levelStartTime = GetTime();
+            return;
         }
-        if ( score > highScore )
+        else
         {
-            SaveHighScore(score);
-            highScore = LoadHighScore();
+            // create boss word
+            if ( !bossCreated )
+            {
+                int boss_level = min(10, level);
+                int boss_idx = GetRandomValue(0, ( int )bossLevelWord[boss_level].size() - 1);
+                std::string boss_word = bossLevelWord[boss_level][boss_idx];
+                int posX = GetScreenWidth() / 2;
+                int posY = - 10;
+                Vector2 pos = { posX,posY };
+                wordships.push_back(WordShip(font, pos, boss_word, level, true));
+                bossCreated = true;
+            }
+
+            return;
         }
-        gameState = LEVEL_COMPLETED;
-        timeSpentTyping += ( GetTime() - typingStartTime );
-        typingStartTime = -1;
-        levelStartTime = GetTime();
-        return;
+
     }
     if ( gameState == LEVEL_COMPLETED )
     {
@@ -426,6 +520,7 @@ void Game::Update()
             level++;
             canPowerUp = true;
             hasMissTyped = false;
+            bossIsDead = false;
             numWordsWithoutMiss = 0;
             target_idx = -1;
             gameState = SHOW_NEXT_LEVEL;
@@ -620,6 +715,14 @@ void Game::HandleTyping()
                 if ( wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
                 {
                     // trigger explosion
+                    if ( wordships[target_idx].isBoss )
+                    {
+                        bossIsDead = true;
+                        // create mini wordships
+                        Vector2 position = wordships[target_idx].position;
+                        CreateMiniWordShips(position, level);
+
+                    }
                     wordTyped ++;
                     Vector2 explosionPos = wordships[target_idx].GetCenter();
                     explosions.emplace_back(&explosionTexture, explosionPos);
@@ -645,6 +748,7 @@ void Game::HandleTyping()
                 hasMissTyped = true;
                 numWordsWithoutMiss = 0;
             }
+
         }
     }
     else
@@ -663,6 +767,12 @@ void Game::HandleTyping()
 
             if ( isValid(target_idx) && wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
+                if ( wordships[target_idx].isBoss )
+                {
+                    bossIsDead = true;
+                    Vector2 position = wordships[target_idx].position;
+                    CreateMiniWordShips(position, level);
+                }
                 wordTyped ++;
                 Vector2 explosionPos = wordships[target_idx].GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
@@ -707,7 +817,7 @@ void Game::ShowResult(int yOffset)
 
     // Panel size and position
     float cardWidth = 300;
-    float cardHeight = 300;
+    float cardHeight = 280;
     float cardX = GetScreenWidth() / 2.0f - cardWidth / 2.0f;
     float cardY = ( GetScreenHeight() / 2.0f - cardHeight / 2.0f ) + 100 - yOffset;
     Rectangle cardRect = { cardX, cardY, cardWidth, cardHeight };
@@ -722,7 +832,7 @@ void Game::ShowResult(int yOffset)
     // wpm
 
     wpm = ( wordTyped * 60 ) / timeSpentTyping;
-    string wpmStr = "WPM:" + to_string(wpm);
+    string wpmStr = "WPM : " + to_string(wpm);
 
     float padding = 20;
     Vector2 scorePos = { cardX + padding, cardY + padding + 20 };
@@ -1039,17 +1149,29 @@ std::vector<WordShip> Game::CreateWordships()
         float word_width = MeasureTextEx(font, wordPool[i].c_str(), 50, 2).x + 20;
         if ( posx + word_width < GetScreenWidth() )
         {
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false));
         }
         else
         {
             posx = 0;
             posy -= word_height;
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level));
+            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false));
         }
         posx += word_width;
         posx += spacing;
     }
+
+
     return ships;
+}
+
+void Game::CreateMiniWordShips(Vector2 position, int level)
+{
+    int num_words = max(5, level);
+    int idx = GetRandomValue(0, 25 - num_words);
+    for ( int i = 0; i < num_words; i++ )
+    {
+        wordships.push_back(WordShip(font, position, oneLetterWords[( i + idx ) % 26], level, false));
+    }
 }
 
