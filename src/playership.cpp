@@ -1,12 +1,15 @@
 #include "playership.hpp"
+#include <string>
 #include <vector>
-#include<string>
+
 
 
 
 PlayerShip::PlayerShip()
 {
-    image = LoadTexture("assets/spaceship_1.png");
+    image_idx = 0;
+    images = loadImages();
+    image = images[0];
     LaserSound = LoadSound("Sounds/laser.ogg");
     speed = 3;
     alive = true;
@@ -16,17 +19,34 @@ PlayerShip::PlayerShip()
     target_word = "";
 }
 
+std::vector<Texture2D> PlayerShip::loadImages()
+{
+    std::vector<Texture2D>imgs;
+    for ( int i = 1; i <= 4; i++ )
+    {
+        std::string path = "assets/f" + std::to_string(i) + ".png";
+        Texture2D image1 = LoadTexture(path.c_str());
+        imgs.push_back(image1);
+    }
+
+    return imgs;
+}
+
 PlayerShip::~PlayerShip()
 {
-    UnloadTexture(image);
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        UnloadTexture(images[i]);
+    }
     UnloadSound(LaserSound);
 }
 
-void PlayerShip::Draw()
+void PlayerShip::Draw(int idx)
 {
     if ( alive )
     {
-        DrawTextureV(image, position, WHITE);
+        DrawTextureV(images[idx], { position.x,position.y }, WHITE);
     }
 
 }
@@ -86,3 +106,4 @@ Rectangle PlayerShip::GetRect()
         return { position.x,position.y,0,0 };
     }
 }
+

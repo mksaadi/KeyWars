@@ -14,7 +14,6 @@ Bullet::Bullet(Texture2D bulletTexture, Vector2 startPos, WordShip* target, floa
         Vector2 direction = Vector2Subtract(target->GetCenter(), position);
         velocity = Vector2Scale(Vector2Normalize(direction), speed);
     }
-
 }
 
 void Bullet::Update()

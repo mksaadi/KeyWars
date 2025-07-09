@@ -10,7 +10,7 @@ class PlayerShip
     public:
     PlayerShip();
     ~PlayerShip();
-    void Draw();
+    void Draw(int idx);
     void Move();
     char Fire();
     Rectangle GetRect();
@@ -18,7 +18,11 @@ class PlayerShip
     std::vector<Bullet>powerUpBullets;
     Vector2 position;
     Texture2D image;
+    std::vector<Texture2D>images;
+    std::vector<Texture2D> loadImages();
+
     bool alive;
+    int image_idx;
     int speed;
     double lastFireTime;
     std::string target_word;

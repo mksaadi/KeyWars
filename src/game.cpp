@@ -356,7 +356,9 @@ void Game::Draw()
     }
     if ( gameState == PLAYING || gameState == PAUSED )
     {
-        playership.Draw();
+        playership.Draw(playership.image_idx);
+        playership.image_idx++;
+        playership.image_idx %= ( ( int )playership.images.size() );
         float x = 0 + playership.image.width / 2;
         float y = GetScreenHeight() - playership.image.height;
         for ( int i = 0; i + 1 < lives; i++ )
@@ -945,7 +947,7 @@ void Game::ShowProgressbar()
     float barWidth = 300;
     float barHeight = 20;
     float barX = GetScreenWidth() / 2.0f - barWidth / 2.0f;
-    float barY = GetScreenHeight() - 50;
+    float barY = GetScreenHeight() - 30;
     Rectangle progressBarRect = { barX,barY,barWidth,barHeight };
 
     GuiProgressBar(progressBarRect, "Power Up", NULL, &progress, 0.0f, progressGoal);
