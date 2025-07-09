@@ -7,24 +7,42 @@ using namespace std;
 
 #include "game.hpp"
 
+
+const int WINDOW_WIDTH = 1920;
+const int WINDOW_HEIGHT = 1080;
+
+
 int main()
 {
-    InitWindow(1920, 1080, "KeyWars");
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "KeyWars");
     SetTargetFPS(60);
     InitAudioDevice();
     srand(time(NULL));
 
 
-    Texture2D background = LoadTexture("assets/default.jpg");
-    float bgY = 0;
+    Texture2D background = LoadTexture("assets/Purple_Nebula.png");
+    if ( background.id == 0 ) {
+        TraceLog(LOG_ERROR, "Failed to load background image!");
+    }
+
+    float bgY = 0.0f;
     auto UpdateBackground = [&] () {
-        bgY += 0.5f;
-        if ( bgY >= background.height )
+        float scaleX = ( float )WINDOW_WIDTH / background.width;
+        float scaleY = ( float )WINDOW_HEIGHT / background.height;
+        float scale = std::max(scaleX, scaleY);
+        float bgDrawHeight = background.height * scale;
+        bgY += 0.5f; // scroll speed
+        if ( bgY >= bgDrawHeight )
             bgY = 0;
         };
     auto DrawBackground = [&] () {
-        DrawTextureEx(background, { 0, bgY }, 0.0f, 1.0f, WHITE);
-        DrawTextureEx(background, { 0, bgY - ( float )background.height }, 0.0f, 1.0f, WHITE);
+        float scaleX = ( float )WINDOW_WIDTH / background.width;
+        float scaleY = ( float )WINDOW_HEIGHT / background.height;
+        float scale = std::max(scaleX, scaleY);
+        float bgDrawHeight = background.height * scale;
+        // Draw two copies for seamless vertical scrolling
+        DrawTextureEx(background, { 0, bgY }, 0.0f, scale, WHITE);
+        DrawTextureEx(background, { 0, bgY - bgDrawHeight }, 0.0f, scale, WHITE);
         };
     Font font = LoadFont("fonts/FunnelDisplay-VariableFont_wght.ttf");
 
@@ -36,7 +54,7 @@ int main()
         BeginDrawing();
         if ( !game.isPaused )UpdateBackground();
         DrawBackground();
-        // game.HandleInput();
+        game.HandleInput();
         game.Update();
         game.Draw();
         EndDrawing();

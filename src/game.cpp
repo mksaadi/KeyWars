@@ -187,6 +187,8 @@ void Game::Initialize()
 
 void Game::LoadAssets()
 {
+    rocketTexture = LoadTexture("assets/rocket_1.png");
+    bulletTexture = LoadTexture("assets/bullet.png");
     powerUpTexture = LoadTexture("assets/ExplosiveBarrel.png");
     explosionTexture = LoadTexture("assets/explosion.png");
     impactTexture = LoadTexture("assets/explosion-sheet.png");
@@ -726,7 +728,7 @@ void Game::HandleTyping()
                 successfulKeyStrokes++;
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-                playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 40.0f, false));
+                playership.bullets.push_back(Bullet(bulletTexture, shipCenter, &wordships[target_idx], 40.0f, false));
 
                 wordships[target_idx].typedCount++;
 
@@ -781,7 +783,7 @@ void Game::HandleTyping()
             // matched. So fire a bullet towards the wordship
 
             Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-            playership.bullets.push_back(Bullet(shipCenter, &wordships[target_idx], 40.0f, false));
+            playership.bullets.push_back(Bullet(bulletTexture, shipCenter, &wordships[target_idx], 40.0f, false));
 
             if ( isValid(target_idx) && wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
             {
@@ -967,7 +969,7 @@ void Game::ActivatePowerup()
     for ( int i = 0; i < min(level, ( int )targets.size()); i++ )
     {
         WordShip* targetShip = targets[i].second;
-        playership.powerUpBullets.push_back(Bullet(shipCenter, targetShip, 50.0f, true));
+        playership.powerUpBullets.push_back(Bullet(rocketTexture, shipCenter, targetShip, 50.0f, true));
     }
 }
 

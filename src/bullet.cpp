@@ -1,8 +1,9 @@
 #include "bullet.hpp"
 #include "raymath.h"
 
-Bullet::Bullet(Vector2 startPos, WordShip* target, float speed, bool isPowerBullet)
+Bullet::Bullet(Texture2D bulletTexture, Vector2 startPos, WordShip* target, float speed, bool isPowerBullet)
 {
+    this->bulletTexture = bulletTexture;
     this->position = startPos;
     this->speed = speed;
     this->target = target;
@@ -33,14 +34,10 @@ void Bullet::Update()
 void Bullet::Draw()
 {
     if ( active ) {
-        if ( isPowerBullet )
-        {
-            DrawCircleV(position, 8, RED);
-        }
-        else
-        {
-            DrawCircleV(position, 6, SKYBLUE);
-        }
+        float angle = atan2f(velocity.y, velocity.x) * RAD2DEG + 90.0f;
+        float scale = ( isPowerBullet ? 2.0f : 1.0f );
+        Vector2 origin = { ( float )bulletTexture.width / 2,( float )bulletTexture.height / 2 };
+        DrawTextureEx(bulletTexture, { position.x - origin.x, position.y - origin.y }, angle, scale, WHITE);
     }
 }
 
@@ -48,7 +45,7 @@ Rectangle Bullet::GetRect()
 {
     if ( active )
     {
-        return { position.x - 6, position.y - 6, 12.0f, 12.0f }; // diameter-based bounding box
+        return { position.x - 6, position.y - 6, 12.0f, 12.0f };
     }
     else
     {
