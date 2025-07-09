@@ -187,6 +187,7 @@ void Game::Initialize()
 
 void Game::LoadAssets()
 {
+    wordTexture = LoadTexture("assets/e_f1.png");
     rocketTexture = LoadTexture("assets/rocket_1.png");
     bulletTexture = LoadTexture("assets/bullet.png");
     powerUpTexture = LoadTexture("assets/ExplosiveBarrel.png");
@@ -507,7 +508,7 @@ void Game::Update()
                 int posX = ( GetScreenWidth() / 2 ) + offset;
                 int posY = - 10;
                 Vector2 pos = { posX,posY };
-                wordships.push_back(WordShip(font, pos, boss_word, level, true, false, playership.position));
+                wordships.push_back(WordShip(font, pos, wordTexture, boss_word, level, true, false, playership.position));
                 bossCreated = true;
             }
 
@@ -1171,13 +1172,13 @@ std::vector<WordShip> Game::CreateWordships()
         float word_width = MeasureTextEx(font, wordPool[i].c_str(), 50, 2).x + 20;
         if ( posx + word_width < GetScreenWidth() )
         {
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false, false, playership.position));
+            ships.push_back(WordShip(font, { posx,posy }, wordTexture, wordPool[i], level, false, false, playership.position));
         }
         else
         {
             posx = 0;
             posy -= word_height;
-            ships.push_back(WordShip(font, { posx,posy }, wordPool[i], level, false, false, playership.position));
+            ships.push_back(WordShip(font, { posx,posy }, wordTexture, wordPool[i], level, false, false, playership.position));
         }
         posx += word_width;
         posx += spacing;
@@ -1193,7 +1194,7 @@ void Game::CreateMiniWordShips(Vector2 position, int level)
     int idx = GetRandomValue(0, 25 - num_words);
     for ( int i = 0; i < num_words; i++ )
     {
-        wordships.push_back(WordShip(font, position, oneLetterWords[( i + idx ) % 26], level, false, true, playership.position));
+        wordships.push_back(WordShip(font, position, wordTexture, oneLetterWords[( i + idx ) % 26], level, false, true, playership.position));
     }
 }
 

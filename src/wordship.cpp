@@ -17,16 +17,19 @@ WordShip::WordShip()
     font = GetFontDefault();
 }
 
-WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool isBoss, bool isMinionShip, Vector2 playership_position)
+WordShip::WordShip(Font f, Vector2 position, Texture2D image, std::string word, int level, bool isBoss, bool isMinionShip, Vector2 playership_position)
 {
     Vector2 direction = Vector2Subtract(playership_position, position);
     this->position = position;
+    this->image = image;
     this->playership_position = playership_position;
     this->word = word;
     this->isBoss = isBoss;
     this->isMinionShip = isMinionShip;
     this->alive = true;
-    if ( isMinionShip || isBoss )
+    this->colors = { WHITE,BLUE,YELLOW,GREEN,MAGENTA };
+    this->color = colors[GetRandomValue(0, 4)];
+    if ( isMinionShip )
     {
         float baseSpeed = 0.8f;
         float scale = 0.6f;
@@ -64,13 +67,14 @@ void WordShip::Draw(bool isTarget)
         fontSize = 40;
     }
     float spacing = 2;
-    Vector2 drawPos = position;
     std::string typedPart = word.substr(0, typedCount);
     std::string untypedPart = word.substr(typedCount);
 
+    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
+    Vector2 drawPos = position;
+    Vector2 imageDrawPos = { position.x + ( textSize.x / 2 ) - image.width,position.y + image.height };
     if ( isTarget )
     {
-        Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
         DrawRectangleV(position, { textSize.x, textSize.y }, Fade(ORANGE, 0.3f));
     }
     DrawTextEx(font, typedPart.c_str(), drawPos, fontSize, spacing, BLACK);
@@ -80,7 +84,14 @@ void WordShip::Draw(bool isTarget)
 
     // Draw untyped part
     DrawTextEx(font, untypedPart.c_str(), drawPos, fontSize, spacing, WHITE);
-
+    if ( isBoss )
+    {
+        DrawTextureEx(image, imageDrawPos, 0, 2, color);
+    }
+    else
+    {
+        DrawTextureV(image, imageDrawPos, color);
+    }
 }
 
 void WordShip::Move()
@@ -113,11 +124,10 @@ void WordShip::Move()
 Rectangle WordShip::GetRect()
 {
     float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
-    return { position.x,position.y,width + 10,50 };
+    return { position.x,position.y,width + 15,50 };
 }
 
 Vector2 WordShip::GetCenter()
 {
-    float wordWidth = MeasureTextEx(font, word.c_str(), 30, 2).x;
-    return { position.x + wordWidth / 2, position.y + 15 };
+    return { position.x + image.width / 2, position.y + image.height / 2 };
 }

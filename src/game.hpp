@@ -71,6 +71,7 @@ class Game
     Texture2D powerUpTexture;
     Texture2D bulletTexture;
     Texture2D rocketTexture;
+    Texture2D wordTexture;
     std::vector<Explosion>explosions;
     std::vector<Impact>impacts;
 
