@@ -36,7 +36,7 @@ int main()
         BeginDrawing();
         if ( !game.isPaused )UpdateBackground();
         DrawBackground();
-        game.HandleInput();
+        // game.HandleInput();
         game.Update();
         game.Draw();
         EndDrawing();

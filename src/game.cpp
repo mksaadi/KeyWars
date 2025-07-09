@@ -497,7 +497,10 @@ void Game::Update()
                 int boss_level = min(10, level);
                 int boss_idx = GetRandomValue(0, ( int )bossLevelWord[boss_level].size() - 1);
                 std::string boss_word = bossLevelWord[boss_level][boss_idx];
-                int posX = GetScreenWidth() / 2;
+                int offset = GetRandomValue(0, GetScreenWidth() / 2 - 200);
+                int sign = GetRandomValue(0, 1) == 0 ? -1 : 1;
+                offset *= sign;
+                int posX = ( GetScreenWidth() / 2 ) + offset;
                 int posY = - 10;
                 Vector2 pos = { posX,posY };
                 wordships.push_back(WordShip(font, pos, boss_word, level, true, false, playership.position));

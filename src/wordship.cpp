@@ -26,10 +26,11 @@ WordShip::WordShip(Font f, Vector2 position, std::string word, int level, bool i
     this->isBoss = isBoss;
     this->isMinionShip = isMinionShip;
     this->alive = true;
-    if ( isMinionShip )
+    if ( isMinionShip || isBoss )
     {
-        this->speed = 2.0;
-        this->velocity = { 0.0f,speed };
+        float baseSpeed = 0.8f;
+        float scale = 0.6f;
+        this->speed = std::min(8, ( int )( baseSpeed + scale * ( log2(level + 1) ) ));
     }
     else
     {
@@ -58,7 +59,7 @@ void WordShip::Draw(bool isTarget)
 {
     if ( !alive )return;
     float fontSize = 30;
-    if ( isBoss )
+    if ( isTarget || isMinionShip )
     {
         fontSize = 40;
     }
@@ -84,6 +85,16 @@ void WordShip::Draw(bool isTarget)
 
 void WordShip::Move()
 {
+    if ( isBoss || isMinionShip )
+    {
+        Vector2 direction = Vector2Subtract(playership_position, position);
+        if ( Vector2Length(direction) > 0.1 )
+        {
+            velocity = Vector2Scale(Vector2Normalize(direction), speed);
+            position = Vector2Add(position, velocity);
+        }
+        return;
+    }
     position.x += velocity.x;
     position.y += velocity.y;
     if ( position.y > GetScreenHeight() )
