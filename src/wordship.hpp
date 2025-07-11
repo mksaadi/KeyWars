@@ -13,17 +13,20 @@ class WordShip
     void Draw(bool isTarget);
     void Move();
     Rectangle GetRect();
+    Rectangle GetImageRect();
     Vector2 GetCenter();
     std::string word;
     std::vector <Color> colors;
     Color color;
     Texture2D image;
     Vector2 position;
+    Vector2 shipPosition;
     Vector2 velocity;
     float speed;
     bool alive;
     bool isBoss;
     bool isMinionShip;
+    bool isReadytoDestroy;
     int cur_target;
     int typedCount;
     char target_char;
@@ -32,6 +35,7 @@ class WordShip
     float amplitude;
     float frequency;
     float startTime;
+    float wordDestroyedTime;
     Vector2 basePosition;
     Vector2 playership_position;
 

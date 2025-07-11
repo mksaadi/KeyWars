@@ -20,7 +20,7 @@ int main()
     srand(time(NULL));
 
 
-    Texture2D background = LoadTexture("assets/Purple_Nebula.png");
+    Texture2D background = LoadTexture("assets/Starfield_1.png");
     if ( background.id == 0 ) {
         TraceLog(LOG_ERROR, "Failed to load background image!");
     }

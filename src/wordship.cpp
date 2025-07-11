@@ -26,18 +26,19 @@ WordShip::WordShip(Font f, Vector2 position, Texture2D image, std::string word, 
     this->word = word;
     this->isBoss = isBoss;
     this->isMinionShip = isMinionShip;
+    this->isReadytoDestroy = false;
     this->alive = true;
     this->colors = { WHITE,BLUE,YELLOW,GREEN,MAGENTA };
     this->color = colors[GetRandomValue(0, 4)];
     if ( isMinionShip )
     {
         float baseSpeed = 0.8f;
-        float scale = 0.6f;
-        this->speed = std::min(8, ( int )( baseSpeed + scale * ( log2(level + 1) ) ));
+        float speedScale = 0.6f;
+        this->speed = std::min(8, ( int )( baseSpeed + speedScale * ( log2(level + 1) ) ));
     }
     else
     {
-        this->speed = 0.2;
+        this->speed = isBoss ? 0.5f : 0.2f;
         this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
         this->velocity.y = std::min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
     }
@@ -50,6 +51,13 @@ WordShip::WordShip(Font f, Vector2 position, Texture2D image, std::string word, 
     this->amplitude = GetRandomValue(10, 20);
     this->frequency = GetRandomValue(1, 2);
     this->startTime = GetTime();
+    this->wordDestroyedTime = 0.0f;
+
+    float fontSize = 30;
+    float spacing = 2;
+    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
+    float scale = isBoss ? 1.0f : 0.5f;
+    this->shipPosition = { position.x + ( textSize.x / 2 ) - ( image.width * scale ) / 2, position.y + image.height * scale + 5 };
 }
 
 
@@ -61,18 +69,18 @@ WordShip::~WordShip()
 void WordShip::Draw(bool isTarget)
 {
     if ( !alive )return;
+
     float fontSize = 30;
-    if ( isTarget || isMinionShip )
-    {
-        fontSize = 40;
-    }
     float spacing = 2;
+    float scale = isBoss ? 1.0f : 0.5f;
+    DrawTextureEx(image, shipPosition, 0, scale, color);
+
+    if ( word == "" )return;
     std::string typedPart = word.substr(0, typedCount);
     std::string untypedPart = word.substr(typedCount);
 
-    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
     Vector2 drawPos = position;
-    Vector2 imageDrawPos = { position.x + ( textSize.x / 2 ) - image.width,position.y + image.height };
+    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
     if ( isTarget )
     {
         DrawRectangleV(position, { textSize.x, textSize.y }, Fade(ORANGE, 0.3f));
@@ -84,18 +92,17 @@ void WordShip::Draw(bool isTarget)
 
     // Draw untyped part
     DrawTextEx(font, untypedPart.c_str(), drawPos, fontSize, spacing, WHITE);
-    if ( isBoss )
-    {
-        DrawTextureEx(image, imageDrawPos, 0, 2, color);
-    }
-    else
-    {
-        DrawTextureV(image, imageDrawPos, color);
-    }
+
+
 }
 
 void WordShip::Move()
 {
+    if ( !alive || word == "" )return;
+    float fontSize = 30;
+    float spacing = 2;
+    float scale = isBoss ? 1.0f : 0.5f;
+    Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
     if ( isBoss || isMinionShip )
     {
         Vector2 direction = Vector2Subtract(playership_position, position);
@@ -104,6 +111,7 @@ void WordShip::Move()
             velocity = Vector2Scale(Vector2Normalize(direction), speed);
             position = Vector2Add(position, velocity);
         }
+        shipPosition = { position.x + ( textSize.x / 2 ) - ( image.width * scale ) / 2, position.y + image.height * scale + 5 };
         return;
     }
     position.x += velocity.x;
@@ -118,6 +126,7 @@ void WordShip::Move()
         velocity.x *= -1;
         position.x = std::max(0.0f, std::min(position.x, GetScreenWidth() - wordWidth));
     }
+    shipPosition = { position.x + ( textSize.x / 2 ) - ( image.width * scale ) / 2, position.y + image.height * scale + 5 };
 }
 
 
@@ -127,7 +136,13 @@ Rectangle WordShip::GetRect()
     return { position.x,position.y,width + 15,50 };
 }
 
+Rectangle WordShip::GetImageRect()
+{
+    return { shipPosition.x,shipPosition.y,image.width,image.height };
+}
+
 Vector2 WordShip::GetCenter()
 {
-    return { position.x + image.width / 2, position.y + image.height / 2 };
+    float scale = isBoss ? 1.0f : 0.5f;
+    return { shipPosition.x + image.width * scale / 2 ,shipPosition.y + image.height * scale / 2 };
 }
