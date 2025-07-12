@@ -2,8 +2,6 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "wordship.hpp"
-#include <vector>
-#include <string>
 
 
 WordShip::WordShip()
@@ -98,12 +96,12 @@ void WordShip::Draw(bool isTarget)
 
 void WordShip::Move()
 {
-    if ( !alive || word == "" )return;
+    if ( !alive )return;
     float fontSize = 30;
     float spacing = 2;
     float scale = isBoss ? 1.0f : 0.5f;
     Vector2 textSize = MeasureTextEx(font, word.c_str(), fontSize, spacing);
-    if ( isBoss || isMinionShip )
+    if ( ( isBoss || isMinionShip ) )
     {
         Vector2 direction = Vector2Subtract(playership_position, position);
         if ( Vector2Length(direction) > 0.1 )
@@ -112,6 +110,10 @@ void WordShip::Move()
             position = Vector2Add(position, velocity);
         }
         shipPosition = { position.x + ( textSize.x / 2 ) - ( image.width * scale ) / 2, position.y + image.height * scale + 5 };
+        if ( position.y > GetScreenHeight() )
+        {
+            alive = false;
+        }
         return;
     }
     position.x += velocity.x;
@@ -132,8 +134,12 @@ void WordShip::Move()
 
 Rectangle WordShip::GetRect()
 {
-    float width = MeasureTextEx(font, word.c_str(), 50, 2).x;
-    return { position.x,position.y,width + 15,50 };
+    float fontisize = 30;
+    float spacing = 2;
+    float padding = 15;
+    float width = MeasureTextEx(font, word.c_str(), 30, 2).x;
+    float height = MeasureTextEx(font, word.c_str(), 30, 2).y;
+    return { position.x,position.y,width + padding,height };
 }
 
 Rectangle WordShip::GetImageRect()

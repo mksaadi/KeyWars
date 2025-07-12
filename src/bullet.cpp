@@ -34,7 +34,7 @@ void Bullet::Draw()
 {
     if ( active ) {
         float angle = atan2f(velocity.y, velocity.x) * RAD2DEG + 90.0f;
-        float scale = ( isPowerBullet ? 2.0f : 1.0f );
+        float scale = ( isPowerBullet ? 3.0f : 1.0f );
         Vector2 origin = { ( float )bulletTexture.width / 2,( float )bulletTexture.height / 2 };
         DrawTextureEx(bulletTexture, { position.x - origin.x, position.y - origin.y }, angle, scale, WHITE);
     }

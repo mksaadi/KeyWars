@@ -84,7 +84,7 @@ class Game
     void DeleteInactiveWordShips();
     int GetTargetWordIdx(char c);
     bool isValid(int idx);
-    bool isOutofScreen(std::vector<WordShip>::iterator it);
+   
     bool isWordOutofScreen(int idx);
     int LoadHighScore();
     void SaveHighScore(int curScore);
@@ -97,4 +97,6 @@ class Game
     Sound powerUpSound;
     Sound levelCompleteSound;
     Sound gameOverSound;
+    Sound playerDeathSound;
+    Sound powerUpFireSound;
 };
