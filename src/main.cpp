@@ -21,9 +21,9 @@ int main()
 
 
     Texture2D background = LoadTexture("assets/Starfield_1.png");
-    if ( background.id == 0 ) {
-        TraceLog(LOG_ERROR, "Failed to load background image!");
-    }
+    // if ( background.id == 0 ) {
+    //     TraceLog(LOG_ERROR, "Failed to load background image!");
+    // }
 
     float bgY = 0.0f;
     auto UpdateBackground = [&] () {
@@ -44,8 +44,10 @@ int main()
         DrawTextureEx(background, { 0, bgY }, 0.0f, scale, WHITE);
         DrawTextureEx(background, { 0, bgY - bgDrawHeight }, 0.0f, scale, WHITE);
         };
-    Font font = LoadFont("fonts/FunnelDisplay-VariableFont_wght.ttf");
 
+
+    Font font = LoadFont("fonts/FunnelDisplay-VariableFont_wght.ttf");
+    
 
     Game game(font);
 

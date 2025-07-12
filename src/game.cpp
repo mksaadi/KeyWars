@@ -136,14 +136,14 @@ Game::Game(Font f)
     this->gameState = MAIN_MENU;
     this->levelStartTime = 0;
     this->levelDelay = 3.0f;
-    this->music = LoadMusicStream("Sounds/background_music.ogg");
     this->shouldClose = false;
     this->isPaused = false;
     this-> menuSelection = 0;
-    this-> totalMenuItems = 2;
-    PlayMusicStream(music);
-    SetMusicVolume(music, 0.5f);
+    this-> totalMenuItems = 3;
+    this->musicVolume = 0.5f;
+    this->soundVolume = 0.5f;
     InitGame();
+
 }
 
 Game::~Game()
@@ -167,7 +167,9 @@ void Game::Initialize()
     score = 0;
     wordTyped = 0;
     timeSpentTyping = 0;
-    typingStartTime = 0;
+    typingStartTime = -1;
+    idleTime = 0;
+    lastPauseTime = 0;
     wpm = 0;
     totalKeyStrokes = 0;
     successfulKeyStrokes = 0;
@@ -182,17 +184,22 @@ void Game::Initialize()
     target_idx = -1;
     playership.position.x = GetScreenWidth() / 2;
     playership.position.y = GetScreenHeight() - 100;
+
 }
 
 
 void Game::LoadAssets()
 {
+    music = LoadMusicStream("Sounds/background_music.ogg");
+
     wordTexture = LoadTexture("assets/e_f1.png");
     rocketTexture = LoadTexture("assets/rocket_1.png");
     bulletTexture = LoadTexture("assets/bullet.png");
     powerUpTexture = LoadTexture("assets/explosive.png");
     explosionTexture = LoadTexture("assets/explosion.png");
     impactTexture = LoadTexture("assets/explosion-sheet.png");
+
+
     explosionSound = LoadSound("Sounds/explosion.ogg");
     impactSound = LoadSound("Sounds/NenadSimic - Muffled Distant Explosion.wav");
     errorSound = LoadSound("Sounds/game_error_sound.wav");
@@ -201,12 +208,18 @@ void Game::LoadAssets()
     playerDeathSound = LoadSound("Sounds/player_death.mp3");
     powerUpFireSound = LoadSound("Sounds/burst_fire.mp3");
     gameOverSound = LoadSound("Sounds/GAMEOVER.wav");
+    nevigationSound = LoadSound("Sounds/ui_nav.wav");
+    selectSound = LoadSound("Sounds/ui_select.wav");
+    UpdateAllSoundVolumes();
+
 }
 
 void Game::InitGame()
 {
     Initialize();
     LoadAssets();
+    PlayMusicStream(music);
+    SetMusicVolume(music, musicVolume);
     for ( auto& [level, words] : levelWord )
     {
         shuffle(words.begin(), words.end(), default_random_engine(GetTime() * 1000));
@@ -276,12 +289,14 @@ void Game::Draw()
 
         if ( startPressed )
         {
+            PlaySound(selectSound);
             playership.alive = true;
             InitGame();
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
         if ( quitPressed ) {
+            PlaySound(selectSound);
             shouldClose = true;
         }
         return;
@@ -304,7 +319,8 @@ void Game::Draw()
         DrawText("KEYWARS", GetScreenWidth() / 2 - MeasureText("KEYWARS", 60) / 2, 100, 60, WHITE);
 
         Rectangle startBtn = { ( float )x,( float )y,( float )buttonWidth,( float )buttonHeight };
-        Rectangle quitBtn = { ( float )x,( float )y + 70.0f,( float )buttonWidth,( float )buttonHeight };
+        Rectangle settingsBtn = { ( float )x,( float )y + 70.0f,( float )buttonWidth,( float )buttonHeight };
+        Rectangle quitBtn = { ( float )x,( float )y + 140.0f,( float )buttonWidth,( float )buttonHeight };
 
 
         Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
@@ -316,23 +332,19 @@ void Game::Draw()
         Color hoverBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED));
         Color hoverText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED));
 
-
         if ( menuSelection == 0 )
         {
             GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
             GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
             GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
         }
-
         bool startPressed = GuiButton(startBtn, "Start Game") || ( menuSelection == 0 && IsKeyPressed(KEY_ENTER) );
 
-
-        // resent style
-
-
+        // reset style
         GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
         GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
         GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
 
         if ( menuSelection == 1 )
         {
@@ -340,23 +352,54 @@ void Game::Draw()
             GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
             GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
         }
-
-        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
+        bool settingPressed = GuiButton(settingsBtn, "Settings") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
 
         // reset style
         GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
         GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
         GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
 
-        if ( startPressed ) {
+        if ( menuSelection == 2 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 2 && IsKeyPressed(KEY_ENTER) );
+
+
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( startPressed )
+        {
+            PlaySound(selectSound);
             InitGame();
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
+        if ( settingPressed )
+        {
+            PlaySound(selectSound);
+            gameState = SETTINGS;
+        }
         if ( quitPressed ) {
+            PlaySound(selectSound);
             shouldClose = true;
         }
         return;
+    }
+    if ( gameState == SETTINGS )
+    {
+        const int x = GetScreenWidth() / 2 - 150;
+        const int y = 150;
+        ShowSettings(x, y);
+        DrawText(TextFormat("%d%%", ( int )( soundVolume * 100 )), x + 240, y + 50, 20, WHITE);
+        if ( GuiButton({ ( float )x, ( float )y + 120, 200, 40 }, "Back to Menu") ) {
+            PlaySound(selectSound);
+            gameState = MAIN_MENU;
+        }
     }
     if ( gameState == PLAYING || gameState == PAUSED )
     {
@@ -385,7 +428,16 @@ void Game::Draw()
         {
             bullet.Draw();
         }
-
+        if ( gameState == PAUSED )
+        {
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5f));
+            const int x = GetScreenWidth() / 2 - 150;
+            const int y = 150;
+            ShowSettings(x, y);
+            DrawText(TextFormat("%d%%", ( int )( soundVolume * 100 )), x + 240, y + 50, 20, WHITE);
+            string text = "Press Space to Continue.";
+            DrawText(text.c_str(), x, y + 300, 20, WHITE);
+        }
         ShowPowerUps();
         ShowProgressbar();
     }
@@ -394,6 +446,9 @@ void Game::Draw()
     if ( gameState == LEVEL_COMPLETED )
     {
         // show score and accuracy
+        std::cout << "Word Typed = " << wordTyped << "\n";
+        std::cout << "Time Spent Typing = " << timeSpentTyping << "\n";
+        std::cout << "Idle Time = " << idleTime << "\n";
         ShowResult(0);
         string str = "LEVEL COMPLETE";
         ShowWords(str, 150);
@@ -427,10 +482,12 @@ void Game::Update()
     {
         if ( IsKeyPressed(KEY_DOWN) )
         {
+            PlaySound(nevigationSound);
             menuSelection = ( menuSelection + 1 ) % totalMenuItems;
         }
         if ( IsKeyPressed(KEY_UP) )
         {
+            PlaySound(nevigationSound);
             menuSelection = ( ( menuSelection - 1 ) + totalMenuItems ) % totalMenuItems;
         }
     }
@@ -491,6 +548,9 @@ void Game::Update()
             {
                 wordship.alive = false;
             }
+            timeSpentTyping = 0;
+            typingStartTime = -1;
+            idleTime = 0;
             PlaySound(gameOverSound);
             gameState = GAME_OVER;
             return;
@@ -513,10 +573,11 @@ void Game::Update()
             }
             bossIsDead = false;
             bossCreated = false;
-            gameState = LEVEL_COMPLETED;
             timeSpentTyping += ( GetTime() - typingStartTime );
-            typingStartTime = -1;
+            if ( timeSpentTyping > idleTime )timeSpentTyping -= idleTime;
+            gameState = LEVEL_COMPLETED;
             levelStartTime = GetTime();
+            typingStartTime = -1;
             return;
         }
         else
@@ -574,6 +635,10 @@ void Game::Update()
             target_idx = -1;
             wordships = CreateWordships();
             cout << "Words = " << wordships.size() << "\n";
+            if ( level > 1 )
+            {
+                timeSpentTyping -= 3;
+            }
             gameState = PLAYING;
         }
     }
@@ -653,10 +718,14 @@ void Game::CheckCollisions()
     // wordship vs wordship
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
-
+        if ( !wordships[i].alive )continue;
         for ( int j = i + 1; j < ( int )wordships.size(); j++ )
         {
-            if ( CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) )
+            if ( !wordships[j].alive )continue;
+            if ( CheckCollisionRecs(wordships[i].GetImageRect(), wordships[j].GetImageRect()) ||
+                CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) ||
+                CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetImageRect()) ||
+                CheckCollisionRecs(wordships[i].GetImageRect(), wordships[j].GetImageRect()) )
             {
                 Rectangle r1 = wordships[i].GetRect();
                 Rectangle r2 = wordships[j].GetRect();
@@ -729,7 +798,7 @@ bool Game::isValid(int idx)
 bool Game::isWordOutofScreen(int idx)
 {
     if ( !isValid(idx) )return true;
-    if ( wordships[idx].position.x<0 || wordships[idx].position.x>GetScreenWidth() )return true;
+    if ( wordships[idx].position.x < 0 || wordships[idx].position.x > GetScreenWidth() )return true;
     if ( wordships[idx].position.y > GetScreenHeight() )return true;
     return false;
 }
@@ -739,21 +808,23 @@ void Game::HandleTyping()
 
     if ( IsKeyPressed(KEY_SPACE) )
     {
+        PlaySound(selectSound);
+
         if ( gameState == PLAYING )
         {
+            lastPauseTime = GetTime();
             gameState = PAUSED;
             isPaused = true;
-            return;
         }
         else if ( gameState == PAUSED )
         {
+            idleTime += ( GetTime() - lastPauseTime );
             gameState = PLAYING;
             isPaused = false;
-            return;
         }
     }
     if ( isPaused || gameState != PLAYING )return;
-    if ( ( IsKeyDown(KEY_TAB) && IsKeyPressed(KEY_ENTER) ) )
+    if ( IsKeyPressed(KEY_ENTER) )
     {
         if ( powerUps > 0 )
         {
@@ -943,8 +1014,8 @@ void Game::ShowResult(int yOffset)
     string highScoreStr = "High Score : " + to_string(highScore);
 
     // wpm
-
     wpm = ( wordTyped * 60 ) / timeSpentTyping;
+
     string wpmStr = "WPM : " + to_string(wpm);
 
     float padding = 20;
@@ -962,6 +1033,43 @@ void Game::ShowResult(int yOffset)
     GuiSetStyle(DEFAULT, TEXT_SPACING, prevTextSpacing);
     GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, prevLabelColor);
     GuiSetStyle(LABEL, BASE_COLOR_NORMAL, prevLabelBg);
+}
+
+void Game::ShowSettings(int x, int y)
+{
+
+    DrawText("Settings", GetScreenWidth() / 2 - MeasureText("Settings", 40) / 2, 80, 40, WHITE);
+    DrawText("Music Volume", x, y, 20, RAYWHITE);
+    if ( GuiButton({ ( float )x + 160.0f,( float )y - 5,30,30 }, "-") && musicVolume > 0.0f )
+    {
+        PlaySound(selectSound);
+        musicVolume = std::max(0.0f, musicVolume - 0.1f);
+        SetMusicVolume(music, musicVolume);
+    }
+    if ( GuiButton({ ( float )x + 200.0f,( float )y - 5,30,30 }, "+") && musicVolume < 1.0f )
+    {
+        PlaySound(selectSound);
+
+        musicVolume = std::min(1.0f, musicVolume + 0.1f);
+        SetMusicVolume(music, musicVolume);
+    }
+    DrawText(TextFormat("%d%%", ( int )( musicVolume * 100 )), x + 240, y, 20, WHITE);
+
+
+    DrawText("SFX Volume", x, y + 50, 20, RAYWHITE);
+    if ( GuiButton({ x + 160.0f,y + 45.0f,30,30 }, "-") && soundVolume > 0.0f )
+    {
+        PlaySound(selectSound);
+        soundVolume = std::max(0.0f, soundVolume - 0.1f);
+        UpdateAllSoundVolumes();
+    }
+    if ( GuiButton({ x + 200.0f,y + 45.0f,30,30 }, "+") && soundVolume < 1.0f )
+    {
+        PlaySound(selectSound);
+        soundVolume = std::min(1.0f, soundVolume + 0.1f);
+        UpdateAllSoundVolumes();
+    }
+
 }
 
 void Game::ShowWords(string str, int yOffset)
@@ -1016,6 +1124,9 @@ void Game::ShowPowerUps()
             0.0f,
             WHITE
         );
+        string str = "Press Enter";
+        int width = MeasureText(str.c_str(), 20);
+        DrawText(str.c_str(), x - width, y - 20, 20, WHITE);
 
     }
     else
@@ -1024,6 +1135,7 @@ void Game::ShowPowerUps()
     }
     x -= 10;
     DrawText(to_string(powerUps).c_str(), x, y, 30, WHITE);
+
 
 }
 
@@ -1196,6 +1308,21 @@ void Game::DeleteInactiveWordShips()
     }
 }
 
+void Game::UpdateAllSoundVolumes()
+{
+    SetSoundVolume(playership.LaserSound, soundVolume);
+    SetSoundVolume(explosionSound, soundVolume);
+    SetSoundVolume(impactSound, soundVolume);
+    SetSoundVolume(errorSound, soundVolume);
+    SetSoundVolume(powerUpSound, soundVolume);
+    SetSoundVolume(levelCompleteSound, soundVolume);
+    SetSoundVolume(gameOverSound, soundVolume);
+    SetSoundVolume(playerDeathSound, soundVolume);
+    SetSoundVolume(powerUpFireSound, soundVolume);
+    SetSoundVolume(nevigationSound, soundVolume);
+    SetSoundVolume(selectSound, soundVolume);
+}
+
 void Game::DeleteFinishedExplosions()
 {
 
@@ -1256,14 +1383,13 @@ std::vector<WordShip> Game::CreateWordships()
         }
         ship_added += num_current_level_words;
         if ( word_level < 10 )word_level++;
-
     }
     std::shuffle(wordPool.begin(), wordPool.end(), std::default_random_engine(GetTime() * 1000));
 
     float posx = 0;
     float posy = -30;
-    float word_height = 40;
-    float spacing = 10;
+    float word_height = 60;
+    float spacing = 20;
     for ( int i = 0; i < numberOfShips; i++ )
     {
         float word_width = MeasureTextEx(font, wordPool[i].c_str(), 50, 2).x + 20;

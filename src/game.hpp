@@ -21,6 +21,7 @@ class Game
     void LoadAssets();
     void HandleTyping();
     void ShowResult(int yOffset);
+    void ShowSettings(int x, int y);
     void ShowWords(string str, int yOffset);
     void ShowPowerUps();
     void ShowProgressbar();
@@ -34,7 +35,8 @@ class Game
         PLAYING,
         LEVEL_COMPLETED,
         GAME_OVER,
-        PAUSED
+        PAUSED,
+        SETTINGS
     };
     GameState gameState;
     float levelStartTime;
@@ -53,6 +55,8 @@ class Game
     int wordTyped;
     int timeSpentTyping;
     int typingStartTime;
+    int idleTime;
+    int lastPauseTime;
     int wpm;
     int totalKeyStrokes;
     int successfulKeyStrokes;
@@ -65,6 +69,7 @@ class Game
     int menuSelection;
     int totalMenuItems;
     Music music;
+    float musicVolume;
     Font font;
     Texture2D explosionTexture;
     Texture2D impactTexture;
@@ -82,9 +87,10 @@ class Game
     void DeleteFinishedExplosions();
     void DeleteInactiveImpacts();
     void DeleteInactiveWordShips();
+    void UpdateAllSoundVolumes();
     int GetTargetWordIdx(char c);
     bool isValid(int idx);
-   
+
     bool isWordOutofScreen(int idx);
     int LoadHighScore();
     void SaveHighScore(int curScore);
@@ -99,4 +105,8 @@ class Game
     Sound gameOverSound;
     Sound playerDeathSound;
     Sound powerUpFireSound;
+    Sound nevigationSound;
+    Sound selectSound;
+    float soundVolume;
+
 };
