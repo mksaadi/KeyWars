@@ -7,12 +7,12 @@
 
 PlayerShip::PlayerShip()
 {
+    alive = true;
     image_idx = 0;
     images = loadImages();
     image = images[0];
     LaserSound = LoadSound("Sounds/laser.ogg");
     speed = 3;
-    alive = true;
     position.x = GetScreenWidth() / 2;
     position.y = GetScreenHeight() - 100;
     lastFireTime = 0.0;
@@ -100,6 +100,7 @@ Rectangle PlayerShip::GetRect()
     if ( alive )
     {
         Rectangle rect = Rectangle { position.x,position.y,image.width,image.height };
+        return rect;
     }
     else
     {

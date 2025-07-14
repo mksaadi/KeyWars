@@ -47,7 +47,7 @@ int main()
 
 
     Font font = LoadFont("fonts/FunnelDisplay-VariableFont_wght.ttf");
-    
+
 
     Game game(font);
 
@@ -56,8 +56,9 @@ int main()
         BeginDrawing();
         if ( !game.isPaused )UpdateBackground();
         DrawBackground();
-        game.Update();
         game.Draw();
+        game.Update();
+        game.HandleInput();
         EndDrawing();
     }
 

@@ -43,7 +43,7 @@ class Game
     float levelDelay;
     float lastDeathTime;
 
-
+    bool assestsLoaded;
     bool canPowerUp;
     bool hasMissTyped;
     bool shouldClose;
@@ -68,6 +68,7 @@ class Game
     int target_idx;
     int menuSelection;
     int totalMenuItems;
+    int gameOverMenuItems;
     Music music;
     float musicVolume;
     Font font;
@@ -82,6 +83,9 @@ class Game
 
     private:
     void CheckCollisions();
+    void CheckCollisionsBulletVsWordships();
+    void CheckCollisionsWordshipsVsWordships();
+    void CheckCollisionsWordshipVsPlayership();
     void DeleteInactiveBullets();
     void DeleteInactivePowerdUpBullets();
     void DeleteFinishedExplosions();

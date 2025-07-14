@@ -32,7 +32,7 @@ WordShip::WordShip(Font f, Vector2 position, Texture2D image, std::string word, 
     {
         float baseSpeed = 0.8f;
         float speedScale = 0.6f;
-        this->speed = std::min(8, ( int )( baseSpeed + speedScale * ( log2(level + 1) ) ));
+        this->speed = std::min(8.0f, ( float )( baseSpeed + speedScale * ( log2(level + 1) ) ));
     }
     else
     {
@@ -72,8 +72,6 @@ void WordShip::Draw(bool isTarget)
     float spacing = 2;
     float scale = isBoss ? 1.0f : 0.5f;
     DrawTextureEx(image, shipPosition, 0, scale, color);
-
-    if ( word == "" )return;
     std::string typedPart = word.substr(0, typedCount);
     std::string untypedPart = word.substr(typedCount);
 
@@ -104,11 +102,10 @@ void WordShip::Move()
     if ( ( isBoss || isMinionShip ) )
     {
         Vector2 direction = Vector2Subtract(playership_position, position);
-        if ( Vector2Length(direction) > 0.1 )
-        {
-            velocity = Vector2Scale(Vector2Normalize(direction), speed);
-            position = Vector2Add(position, velocity);
-        }
+
+        velocity = Vector2Scale(Vector2Normalize(direction), speed);
+        position = Vector2Add(position, velocity);
+
         shipPosition = { position.x + ( textSize.x / 2 ) - ( image.width * scale ) / 2, position.y + image.height * scale + 5 };
         if ( position.y > GetScreenHeight() )
         {
@@ -136,15 +133,16 @@ Rectangle WordShip::GetRect()
 {
     float fontisize = 30;
     float spacing = 2;
-    float padding = 15;
+    float padding = ( isMinionShip ? 30 : 15 );
     float width = MeasureTextEx(font, word.c_str(), 30, 2).x;
     float height = MeasureTextEx(font, word.c_str(), 30, 2).y;
-    return { position.x,position.y,width + padding,height };
+    return { position.x,position.y,width + padding,height + padding };
 }
 
 Rectangle WordShip::GetImageRect()
 {
-    return { shipPosition.x,shipPosition.y,image.width,image.height };
+    float padding = ( isMinionShip ? 30 : 15 );
+    return { shipPosition.x,shipPosition.y,image.width + padding,image.height + padding };
 }
 
 Vector2 WordShip::GetCenter()

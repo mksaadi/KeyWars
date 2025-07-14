@@ -42,9 +42,11 @@ void Bullet::Draw()
 
 Rectangle Bullet::GetRect()
 {
+    float scale = ( isPowerBullet ? 3.0f : 1.0f );
     if ( active )
     {
-        return { position.x - 6, position.y - 6, 12.0f, 12.0f };
+        return { position.x - ( ( bulletTexture.width * scale ) / 2 ), ( position.y - ( ( bulletTexture.height * scale ) / 2 ) ),
+            bulletTexture.width * scale, bulletTexture.height * scale };
     }
     else
     {

@@ -140,6 +140,7 @@ Game::Game(Font f)
     this->isPaused = false;
     this-> menuSelection = 0;
     this-> totalMenuItems = 3;
+    this->gameOverMenuItems = 2;
     this->musicVolume = 0.5f;
     this->soundVolume = 0.5f;
     InitGame();
@@ -164,6 +165,7 @@ void Game::Initialize()
 {
     bossIsDead = false;
     bossCreated = false;
+    assestsLoaded = false;
     score = 0;
     wordTyped = 0;
     timeSpentTyping = 0;
@@ -217,7 +219,11 @@ void Game::LoadAssets()
 void Game::InitGame()
 {
     Initialize();
-    LoadAssets();
+    if ( !assestsLoaded )
+    {
+        LoadAssets();
+        assestsLoaded = true;
+    }
     PlayMusicStream(music);
     SetMusicVolume(music, musicVolume);
     for ( auto& [level, words] : levelWord )
@@ -234,74 +240,6 @@ void Game::InitGame()
 
 void Game::Draw()
 {
-    if ( gameState == GAME_OVER )
-    {
-        ShowResult(50);
-        ShowWords("GAME OVER", 250);
-        const int buttonWidth = 200;
-        const int buttonHeight = 50;
-        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
-        const int y = GetScreenHeight() - 100 - buttonHeight;
-        Rectangle startBtn = { ( float )x,( float )y,( float )buttonWidth,( float )buttonHeight };
-        Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
-
-
-        Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
-        Color defaultBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL));
-        Color defaultText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL));
-
-
-        Color hoverBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_FOCUSED));
-        Color hoverBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED));
-        Color hoverText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED));
-
-
-        if ( menuSelection == 0 )
-        {
-            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
-            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
-            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
-        }
-
-        bool startPressed = GuiButton(startBtn, "Start New Game") || ( menuSelection == 0 && IsKeyPressed(KEY_ENTER) );
-
-
-        // resent style
-
-
-        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
-        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
-        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
-
-        if ( menuSelection == 1 )
-        {
-            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
-            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
-            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
-        }
-
-        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
-
-        // reset style
-        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
-        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
-        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
-
-        if ( startPressed )
-        {
-            PlaySound(selectSound);
-            playership.alive = true;
-            InitGame();
-            gameState = SHOW_NEXT_LEVEL;
-            levelStartTime = GetTime();
-        }
-        if ( quitPressed ) {
-            PlaySound(selectSound);
-            shouldClose = true;
-        }
-        return;
-
-    }
     for ( auto& explosion : explosions )
     {
         explosion.Draw();
@@ -390,6 +328,81 @@ void Game::Draw()
         }
         return;
     }
+    if ( gameState == GAME_OVER )
+    {
+        ShowResult(50);
+        ShowWords("GAME OVER", 250);
+        const int buttonWidth = 200;
+        const int buttonHeight = 50;
+        const int x = GetScreenWidth() / 2 - buttonWidth / 2;
+        const int y = GetScreenHeight() - 100 - buttonHeight;
+        Rectangle startBtn = { ( float )x,( float )y,( float )buttonWidth,( float )buttonHeight };
+        Rectangle quitBtn = { x,y + 70,buttonWidth,buttonHeight };
+
+
+        Color defaultBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL));
+        Color defaultBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL));
+        Color defaultText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL));
+
+
+        Color hoverBorder = GetColor(GuiGetStyle(BUTTON, BORDER_COLOR_FOCUSED));
+        Color hoverBase = GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED));
+        Color hoverText = GetColor(GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED));
+
+
+        if ( menuSelection == 0 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool startPressed = GuiButton(startBtn, "Start New Game") || ( menuSelection == 0 && IsKeyPressed(KEY_ENTER) );
+
+
+        // resent style
+
+
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( menuSelection == 1 )
+        {
+            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(hoverBorder));
+            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(hoverBase));
+            GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(hoverText));
+        }
+
+        bool quitPressed = GuiButton(quitBtn, "Quit") || ( menuSelection == 1 && IsKeyPressed(KEY_ENTER) );
+
+        // reset style
+        GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(defaultBorder));
+        GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(defaultBase));
+        GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(defaultText));
+
+        if ( startPressed )
+        {
+            PlaySound(selectSound);
+            playership.alive = true;
+            InitGame();
+            gameState = SHOW_NEXT_LEVEL;
+            levelStartTime = GetTime();
+        }
+        if ( quitPressed ) {
+            PlaySound(selectSound);
+            shouldClose = true;
+        }
+        return;
+
+    }
+    if ( gameState == SHOW_NEXT_LEVEL )
+    {
+        string str = "LEVEL " + to_string(level);
+        ShowWords(str, 0);
+        return;
+    }
+
     if ( gameState == SETTINGS )
     {
         const int x = GetScreenWidth() / 2 - 150;
@@ -400,20 +413,27 @@ void Game::Draw()
             PlaySound(selectSound);
             gameState = MAIN_MENU;
         }
+        return;
     }
     if ( gameState == PLAYING || gameState == PAUSED )
     {
-        playership.Draw(playership.image_idx);
-        playership.image_idx++;
-        playership.image_idx %= ( ( int )playership.images.size() );
-        float x = 0 + playership.image.width / 2;
-        float y = GetScreenHeight() - playership.image.height;
-        for ( int i = 0; i + 1 < lives; i++ )
+        if ( playership.alive && lives > 0 )
         {
-            Vector2 pos = { x,y };
-            DrawTextureV(playership.image, pos, WHITE);
-            x += playership.image.width + 10;
+            playership.Draw(playership.image_idx);
+
+            playership.image_idx++;
+            playership.image_idx %= ( ( int )playership.images.size() );
+            float x = 0 + playership.image.width / 2;
+            float y = GetScreenHeight() - playership.image.height;
+            for ( int i = 0; i + 1 < lives; i++ )
+            {
+                Vector2 pos = { x,y };
+                DrawTextureV(playership.image, pos, WHITE);
+                x += playership.image.width + 10;
+            }
         }
+
+
         for ( int i = 0; i < ( int )wordships.size(); i++ )
         {
             bool isTarget = isValid(target_idx) && ( i == target_idx );
@@ -428,6 +448,14 @@ void Game::Draw()
         {
             bullet.Draw();
         }
+        for ( auto& explosion : explosions )
+        {
+            explosion.Draw();
+        }
+        for ( auto& impact : impacts )
+        {
+            impact.Draw();
+        }
         if ( gameState == PAUSED )
         {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5f));
@@ -440,6 +468,7 @@ void Game::Draw()
         }
         ShowPowerUps();
         ShowProgressbar();
+        return;
     }
 
 
@@ -454,50 +483,20 @@ void Game::Draw()
         ShowWords(str, 150);
         return;
     }
-    if ( gameState == SHOW_NEXT_LEVEL )
-    {
-        string str = "LEVEL " + to_string(level);
-        ShowWords(str, 0);
-        return;
-    }
+
 
 }
 
 void Game::Update()
 {
     UpdateMusicStream(music);
-    HandleTyping();
-    if ( gameState == PAUSED )
+    if ( gameState == PAUSED || gameState == GAME_OVER )
     {
         return;
     }
-    CheckCollisions();
-    DeleteInactiveBullets();
-    DeleteInactivePowerdUpBullets();
-    DeleteInactiveWordShips();
-    DeleteFinishedExplosions();
-    DeleteInactiveImpacts();
-
-    if ( gameState == MAIN_MENU || gameState == GAME_OVER )
+    if ( !isValid(target_idx) )
     {
-        if ( IsKeyPressed(KEY_DOWN) )
-        {
-            PlaySound(nevigationSound);
-            menuSelection = ( menuSelection + 1 ) % totalMenuItems;
-        }
-        if ( IsKeyPressed(KEY_UP) )
-        {
-            PlaySound(nevigationSound);
-            menuSelection = ( ( menuSelection - 1 ) + totalMenuItems ) % totalMenuItems;
-        }
-    }
-    for ( auto& bullet : playership.bullets )
-    {
-        bullet.Update();
-    }
-    for ( auto& bullet : playership.powerUpBullets )
-    {
-        bullet.Update();
+        target_idx = -1;
     }
     for ( auto& impact : impacts )
     {
@@ -507,28 +506,79 @@ void Game::Update()
     {
         explosion.Update();
     }
-    for ( auto& word : wordships )
+
+    if ( gameState == SHOW_NEXT_LEVEL )
     {
-        if ( word.isReadytoDestroy && word.isMinionShip && ( GetTime() - word.wordDestroyedTime > 0.2f ) && word.alive )
+        if ( GetTime() - levelStartTime > 1.5f )
         {
-            Vector2 explosionPos = word.GetCenter();
-            explosions.emplace_back(&explosionTexture, explosionPos);
-            PlaySound(explosionSound);
-            word.alive = false;
+            if ( score > highScore )
+            {
+                SaveHighScore(score);
+                highScore = LoadHighScore();
+            }
+            if ( !isValid(target_idx) )target_idx = -1;
+            wordships = CreateWordships();
+            gameState = PLAYING;
         }
-        else if ( !playership.alive && word.isMinionShip )
-        {
-            word.alive = false;
-        }
-        if ( word.alive )word.Move();
+        return;
     }
 
+    if ( gameState == PLAYING && wordships.empty() )
+    {
+        if ( bossIsDead )
+        {
+            PlaySound(levelCompleteSound);
+            if ( numWordsWithoutMiss >= level * 5 )
+            {
+                score += ( level * 10 );
+            }
+            if ( score > highScore )
+            {
+                SaveHighScore(score);
+                highScore = LoadHighScore();
+            }
+            bossIsDead = false;
+            bossCreated = false;
+            timeSpentTyping += ( GetTime() - typingStartTime );
+            if ( timeSpentTyping > idleTime )timeSpentTyping -= idleTime;
+            if ( !isValid(target_idx) )target_idx = -1;
+            levelStartTime = GetTime();
+            typingStartTime = -1;
+            gameState = lives > 0 ? LEVEL_COMPLETED : GAME_OVER;
+        }
+        else
+        {
+            // create boss word
+            if ( !bossCreated )
+            {
+                bossCreated = true;
+                int boss_level = min(10, level);
+                int boss_idx = GetRandomValue(0, ( int )bossLevelWord[boss_level].size() - 1);
+                std::string boss_word = bossLevelWord[boss_level][boss_idx];
+                int offset = GetRandomValue(0, GetScreenWidth() / 2 - 200);
+                int sign = GetRandomValue(0, 1) == 0 ? -1 : 1;
+                offset *= sign;
+                int posX = ( GetScreenWidth() / 2 ) + offset;
+                int posY = - 10;
+                Vector2 pos = { posX,posY };
+                wordships.push_back(WordShip(font, pos, wordTexture, boss_word, level, true, false, playership.position));
+            }
+        }
 
+        return;
+    }
 
     if ( gameState == PLAYING && !playership.alive )
     {
         if ( lives > 0 )
         {
+            for ( auto& wordship : wordships )
+            {
+                if ( wordship.isMinionShip )
+                {
+                    wordship.alive = false;
+                }
+            }
             if ( GetTime() - lastDeathTime > 1.5f )
             {
                 playership.alive = true;
@@ -548,61 +598,14 @@ void Game::Update()
             {
                 wordship.alive = false;
             }
-            timeSpentTyping = 0;
-            typingStartTime = -1;
-            idleTime = 0;
             PlaySound(gameOverSound);
             gameState = GAME_OVER;
             return;
         }
 
     }
-    if ( gameState == PLAYING && wordships.empty() )
-    {
-        if ( bossIsDead )
-        {
-            PlaySound(levelCompleteSound);
-            if ( numWordsWithoutMiss >= level * 5 )
-            {
-                score += ( level * 10 );
-            }
-            if ( score > highScore )
-            {
-                SaveHighScore(score);
-                highScore = LoadHighScore();
-            }
-            bossIsDead = false;
-            bossCreated = false;
-            timeSpentTyping += ( GetTime() - typingStartTime );
-            if ( timeSpentTyping > idleTime )timeSpentTyping -= idleTime;
-            gameState = LEVEL_COMPLETED;
-            levelStartTime = GetTime();
-            typingStartTime = -1;
-            return;
-        }
-        else
-        {
-            // create boss word
-            if ( !bossCreated )
-            {
-                bossCreated = true;
-                bossIsDead = false;
-                int boss_level = min(10, level);
-                int boss_idx = GetRandomValue(0, ( int )bossLevelWord[boss_level].size() - 1);
-                std::string boss_word = bossLevelWord[boss_level][boss_idx];
-                int offset = GetRandomValue(0, GetScreenWidth() / 2 - 200);
-                int sign = GetRandomValue(0, 1) == 0 ? -1 : 1;
-                offset *= sign;
-                int posX = ( GetScreenWidth() / 2 ) + offset;
-                int posY = - 10;
-                Vector2 pos = { posX,posY };
-                wordships.push_back(WordShip(font, pos, wordTexture, boss_word, level, true, false, playership.position));
-            }
 
-            return;
-        }
 
-    }
     if ( gameState == LEVEL_COMPLETED )
     {
         if ( GetTime() - levelStartTime > levelDelay )
@@ -617,78 +620,88 @@ void Game::Update()
             hasMissTyped = false;
             bossIsDead = false;
             numWordsWithoutMiss = 0;
-            target_idx = -1;
+            if ( !isValid(target_idx) )target_idx = -1;
             gameState = SHOW_NEXT_LEVEL;
             levelStartTime = GetTime();
         }
         return;
     }
-    if ( gameState == SHOW_NEXT_LEVEL )
+
+    for ( auto& bullet : playership.bullets )
     {
-        if ( GetTime() - levelStartTime > 1.5f )
-        {
-            if ( score > highScore )
-            {
-                SaveHighScore(score);
-                highScore = LoadHighScore();
-            }
-            target_idx = -1;
-            wordships = CreateWordships();
-            cout << "Words = " << wordships.size() << "\n";
-            if ( level > 1 )
-            {
-                timeSpentTyping -= 3;
-            }
-            gameState = PLAYING;
-        }
+        bullet.Update();
     }
+    for ( auto& bullet : playership.powerUpBullets )
+    {
+        bullet.Update();
+    }
+
+    for ( auto& word : wordships )
+    {
+        if ( !word.alive )continue;
+        if ( word.isReadytoDestroy && word.isMinionShip && ( GetTime() - word.wordDestroyedTime > 0.2f ) && word.alive )
+        {
+            Vector2 explosionPos = word.GetCenter();
+            explosions.emplace_back(&explosionTexture, explosionPos);
+            PlaySound(explosionSound);
+            word.alive = false;
+        }
+        word.Move();
+    }
+    HandleTyping();
+    CheckCollisions();
+    DeleteInactiveBullets();
+    DeleteInactivePowerdUpBullets();
+    DeleteInactiveWordShips();
+    DeleteFinishedExplosions();
+    DeleteInactiveImpacts();
+    return;
+
+
 }
 
 void Game::CheckCollisions()
 {
-    if ( gameState == GAME_OVER )
-    {
-        target_idx = -1;
-        return;
-    }
+    CheckCollisionsBulletVsWordships();
+    CheckCollisionsWordshipsVsWordships();
+    CheckCollisionsWordshipVsPlayership();
     if ( !isValid(target_idx) )
     {
         target_idx = -1;
     }
-    if ( isValid(target_idx) && wordships[target_idx].isReadytoDestroy )
-    {
-        target_idx = -1;
-    }
+}
 
-    // bullets vs wordships
-
+void Game::CheckCollisionsBulletVsWordships()
+{
     for ( auto& bullet : playership.bullets )
     {
         if ( bullet.active && bullet.target && bullet.target->alive )
         {
             if ( CheckCollisionRecs(bullet.GetRect(), bullet.target->GetImageRect()) || CheckCollisionRecs(bullet.GetRect(), bullet.target->GetRect()) )
             {
-                Vector2 hitPos = bullet.target->GetCenter();
-                impacts.emplace_back(&impactTexture, hitPos);
                 bullet.active = false;
-                PlaySound(impactSound);
                 if ( bullet.target->isMinionShip || bullet.target->isReadytoDestroy )
                 {
+                    if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
+                    {
+                        target_idx = -1;
+                    }
+                    PlaySound(explosionSound);
                     Vector2 explosionPos = bullet.target->GetCenter();
                     explosions.emplace_back(&explosionTexture, explosionPos);
-                    PlaySound(explosionSound);
                     bullet.target->alive = false;
-                    bullet.target->position.x = GetScreenWidth() / 2;
-                    bullet.target->position.y = GetScreenHeight() + 100;
-                    target_idx = -1;
+                }
+                else
+                {
+                    Vector2 hitPos = bullet.target->GetCenter();
+                    PlaySound(impactSound);
+                    impacts.emplace_back(&impactTexture, hitPos);
                 }
             }
         }
 
     }
 
-
-    //wordships vs powered up bullets
 
     for ( auto& bullet : playership.powerUpBullets )
     {
@@ -696,36 +709,44 @@ void Game::CheckCollisions()
         {
             if ( CheckCollisionRecs(bullet.GetRect(), bullet.target ->GetImageRect()) || CheckCollisionRecs(bullet.GetRect(), bullet.target->GetRect()) )
             {
+                // power bullets will destroy the ship on contact no matter that state of the ship
                 Vector2 explosionPos = bullet.target->GetCenter();
                 explosions.emplace_back(&explosionTexture, explosionPos);
                 PlaySound(explosionSound);
-                if ( isValid(target_idx) && bullet.target->word == wordships[target_idx].word )
-                {
-                    target_idx = -1;
-                }
-                bullet.target->alive = false;
                 if ( bullet.target->isBoss )
                 {
                     bossIsDead = true;
                     CreateMiniWordShips(bullet.target->position, level);
                 }
+                if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
+                {
+                    target_idx = -1;
+                }
                 bullet.active = false;
+                bullet.target->alive = false;
             }
         }
     }
+    if ( !isValid(target_idx) )
+    {
+        target_idx = -1;
+    }
 
+}
 
-    // wordship vs wordship
+void Game::CheckCollisionsWordshipsVsWordships()
+{
+
     for ( int i = 0; i < ( int )wordships.size(); i++ )
     {
         if ( !wordships[i].alive )continue;
         for ( int j = i + 1; j < ( int )wordships.size(); j++ )
         {
             if ( !wordships[j].alive )continue;
-            if ( CheckCollisionRecs(wordships[i].GetImageRect(), wordships[j].GetImageRect()) ||
-                CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) ||
+            bool collision = CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetRect()) ||
                 CheckCollisionRecs(wordships[i].GetRect(), wordships[j].GetImageRect()) ||
-                CheckCollisionRecs(wordships[i].GetImageRect(), wordships[j].GetImageRect()) )
+                CheckCollisionRecs(wordships[i].GetImageRect(), wordships[j].GetRect());
+            if ( collision )
             {
                 Rectangle r1 = wordships[i].GetRect();
                 Rectangle r2 = wordships[j].GetRect();
@@ -762,36 +783,38 @@ void Game::CheckCollisions()
 
         }
     }
+}
 
-    // wordship vs playership
+void Game::CheckCollisionsWordshipVsPlayership()
+{
+    if ( gameState != PLAYING ) return;
     for ( auto& wordship : wordships )
     {
-        if ( !wordship.alive || !playership.alive ) continue;
         if ( CheckCollisionRecs(wordship.GetImageRect(), playership.GetRect()) || CheckCollisionRecs(wordship.GetRect(), playership.GetRect()) )
         {
             std::cout << "COLLISION!!!!\n";
-            lastDeathTime = GetTime();
             // trigger explosion
+            PlaySound(playerDeathSound);
             Vector2 explosionPos = { playership.position.x + playership.image.width / 2,playership.position.y };
             explosions.emplace_back(&explosionTexture, explosionPos);
-            PlaySound(playerDeathSound);
             if ( wordship.isBoss )
             {
                 bossIsDead = true;
             }
+            lastDeathTime = GetTime();
             wordship.alive = false;
             playership.alive = false;
+            if ( !isValid(target_idx) )target_idx = -1;
             lives--;
             return;
         }
     }
-
 }
 
 bool Game::isValid(int idx)
 {
-    if ( idx < 0 || idx >= ( int )wordships.size() )return false;
-    return ( wordships[idx].alive );
+    if ( idx < 0 || idx >= ( int )wordships.size() || ( !wordships[idx].alive ) || ( wordships[idx].isReadytoDestroy ) )return false;
+    return true;
 }
 
 
@@ -805,57 +828,13 @@ bool Game::isWordOutofScreen(int idx)
 
 void Game::HandleTyping()
 {
-
-    if ( IsKeyPressed(KEY_SPACE) )
-    {
-        PlaySound(selectSound);
-
-        if ( gameState == PLAYING )
-        {
-            lastPauseTime = GetTime();
-            gameState = PAUSED;
-            isPaused = true;
-        }
-        else if ( gameState == PAUSED )
-        {
-            idleTime += ( GetTime() - lastPauseTime );
-            gameState = PLAYING;
-            isPaused = false;
-        }
-    }
     if ( isPaused || gameState != PLAYING )return;
-    if ( IsKeyPressed(KEY_ENTER) )
-    {
-        if ( powerUps > 0 )
-        {
-            PlaySound(powerUpFireSound);
-            ActivatePowerup();
-            powerUps--;
-        }
-    }
     char typed = playership.Fire();
     if ( typed == '\0' )return;
-
-
     if ( !isValid(target_idx) )
     {
         target_idx = -1;
     }
-    if ( isValid(target_idx) && wordships[target_idx].isReadytoDestroy )
-    {
-        target_idx = -1;
-    }
-    if ( isValid(target_idx) && wordships[target_idx].typedCount >= ( int )wordships[target_idx].word.size() )
-    {
-        wordships[target_idx].isReadytoDestroy = true;
-        target_idx = -1;
-    }
-    if ( isValid(target_idx) && isWordOutofScreen(target_idx) )
-    {
-        wordships[target_idx].alive = false;
-        target_idx = -1;
-    }
-
     totalKeyStrokes++;
     if ( typingStartTime == -1 )
     {
@@ -872,7 +851,6 @@ void Game::HandleTyping()
                 PlaySound(playership.LaserSound);
                 Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
                 playership.bullets.push_back(Bullet(bulletTexture, shipCenter, &wordships[target_idx], 40.0f, false));
-
                 score++;
                 successfulKeyStrokes++;
                 wordships[target_idx].typedCount++;
@@ -902,6 +880,7 @@ void Game::HandleTyping()
                         Vector2 position = wordships[target_idx].shipPosition;
                         CreateMiniWordShips(position, level);
                     }
+                    return;
 
                 }
 
@@ -916,6 +895,7 @@ void Game::HandleTyping()
                     Vector2 position = wordships[target_idx].shipPosition;
                     CreateMiniWordShips(position, level);
                     wordships[target_idx].typedCount = 0;
+                    target_idx = -1;
                 }
 
             }
@@ -927,6 +907,9 @@ void Game::HandleTyping()
         if ( isValid(target_idx) && wordships[target_idx].word[wordships[target_idx].typedCount] == typed )
         {
             PlaySound(playership.LaserSound);
+            // fire bullet
+            Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
+            playership.bullets.push_back(Bullet(bulletTexture, shipCenter, &wordships[target_idx], 40.0f, false));
             score++;
             successfulKeyStrokes++;
 
@@ -949,9 +932,6 @@ void Game::HandleTyping()
                     }
                 }
                 hasMissTyped = false;
-                // fire bullet
-                Vector2 shipCenter = { playership.position.x + playership.image.width / 2,playership.position.y };
-                playership.bullets.push_back(Bullet(bulletTexture, shipCenter, &wordships[target_idx], 40.0f, false));
 
                 if ( wordships[target_idx].isBoss )
                 {
@@ -959,6 +939,7 @@ void Game::HandleTyping()
                     Vector2 position = wordships[target_idx].shipPosition;
                     CreateMiniWordShips(position, level);
                 }
+                return;
             }
             else
             {
@@ -978,9 +959,7 @@ void Game::HandleTyping()
                 CreateMiniWordShips(position, level);
                 wordships[target_idx].typedCount = 0;
                 target_idx = -1;
-
             }
-
         }
     }
 }
@@ -1014,7 +993,14 @@ void Game::ShowResult(int yOffset)
     string highScoreStr = "High Score : " + to_string(highScore);
 
     // wpm
-    wpm = ( wordTyped * 60 ) / timeSpentTyping;
+    if ( timeSpentTyping != 0 )
+    {
+        wpm = ( wordTyped * 60 ) / timeSpentTyping;
+    }
+    else
+    {
+        wpm = 0;
+    }
 
     string wpmStr = "WPM : " + to_string(wpm);
 
@@ -1272,7 +1258,7 @@ void Game::DeleteInactivePowerdUpBullets()
     {
         if ( !it->active || it->target == nullptr || !it->target->alive )
         {
-            if ( isValid(target_idx) && it->target->word == wordships[target_idx].word )
+            if ( isValid(target_idx) && it->target == &wordships[target_idx] )
             {
                 target_idx = -1;
             }
@@ -1362,7 +1348,60 @@ void Game::DeleteInactiveImpacts()
 
 void Game::HandleInput()
 {
-    if ( playership.alive ) playership.Move();
+    if ( gameState == MAIN_MENU )
+    {
+        if ( IsKeyPressed(KEY_DOWN) )
+        {
+            PlaySound(nevigationSound);
+            menuSelection = ( menuSelection + 1 ) % totalMenuItems;
+        }
+        if ( IsKeyPressed(KEY_UP) )
+        {
+            PlaySound(nevigationSound);
+            menuSelection = ( ( menuSelection - 1 ) + totalMenuItems ) % totalMenuItems;
+        }
+    }
+    if ( gameState == GAME_OVER )
+    {
+        if ( IsKeyPressed(KEY_DOWN) )
+        {
+            PlaySound(nevigationSound);
+            menuSelection = ( menuSelection + 1 ) % gameOverMenuItems;
+        }
+        if ( IsKeyPressed(KEY_UP) )
+        {
+            PlaySound(nevigationSound);
+            menuSelection = ( ( menuSelection - 1 ) + gameOverMenuItems ) % gameOverMenuItems;
+        }
+    }
+
+    if ( IsKeyPressed(KEY_SPACE) )
+    {
+        PlaySound(selectSound);
+        if ( gameState == PLAYING )
+        {
+            lastPauseTime = GetTime();
+            gameState = PAUSED;
+            isPaused = true;
+        }
+        else if ( gameState == PAUSED )
+        {
+            idleTime += ( GetTime() - lastPauseTime );
+            gameState = PLAYING;
+            isPaused = false;
+        }
+    }
+    if ( IsKeyPressed(KEY_ENTER) && gameState == PLAYING )
+    {
+        if ( powerUps > 0 )
+        {
+            PlaySound(powerUpFireSound);
+            ActivatePowerup();
+            powerUps--;
+        }
+    }
+
+
 }
 
 
