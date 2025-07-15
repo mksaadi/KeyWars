@@ -141,8 +141,8 @@ Rectangle WordShip::GetRect()
 
 Rectangle WordShip::GetImageRect()
 {
-    float padding = ( isMinionShip ? 30 : 15 );
-    return { shipPosition.x,shipPosition.y,image.width + padding,image.height + padding };
+    float scale = isBoss ? 1.0f : 0.5f;
+    return { shipPosition.x,shipPosition.y,image.width * scale,image.height * scale };
 }
 
 Vector2 WordShip::GetCenter()

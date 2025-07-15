@@ -197,7 +197,7 @@ void Game::LoadAssets()
     wordTexture = LoadTexture("assets/e_f1.png");
     rocketTexture = LoadTexture("assets/rocket_1.png");
     bulletTexture = LoadTexture("assets/bullet.png");
-    powerUpTexture = LoadTexture("assets/explosive.png");
+    powerUpTexture = LoadTexture("assets/powered_bullet.png");
     explosionTexture = LoadTexture("assets/explosion.png");
     impactTexture = LoadTexture("assets/explosion-sheet.png");
 
@@ -665,10 +665,10 @@ void Game::CheckCollisions()
     CheckCollisionsBulletVsWordships();
     CheckCollisionsWordshipsVsWordships();
     CheckCollisionsWordshipVsPlayership();
-    if ( !isValid(target_idx) )
-    {
-        target_idx = -1;
-    }
+    // if ( !isValid(target_idx) )
+    // {
+    //     target_idx = -1;
+    // }
 }
 
 void Game::CheckCollisionsBulletVsWordships()
@@ -682,14 +682,16 @@ void Game::CheckCollisionsBulletVsWordships()
                 bullet.active = false;
                 if ( bullet.target->isMinionShip || bullet.target->isReadytoDestroy )
                 {
-                    if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
-                    {
-                        target_idx = -1;
-                    }
                     PlaySound(explosionSound);
                     Vector2 explosionPos = bullet.target->GetCenter();
                     explosions.emplace_back(&explosionTexture, explosionPos);
                     bullet.target->alive = false;
+                    // if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
+                    // {
+                    //     target_idx = -1;
+                    // }
+                    return;
+
                 }
                 else
                 {
@@ -718,19 +720,20 @@ void Game::CheckCollisionsBulletVsWordships()
                     bossIsDead = true;
                     CreateMiniWordShips(bullet.target->position, level);
                 }
-                if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
-                {
-                    target_idx = -1;
-                }
+                // if ( !isValid(target_idx) || ( isValid(target_idx) && bullet.target == &wordships[target_idx] ) )
+                // {
+                //     target_idx = -1;
+                // }
                 bullet.active = false;
                 bullet.target->alive = false;
+                return;
             }
         }
     }
-    if ( !isValid(target_idx) )
-    {
-        target_idx = -1;
-    }
+    // if ( !isValid(target_idx) )
+    // {
+    //     target_idx = -1;
+    // }
 
 }
 
@@ -804,7 +807,10 @@ void Game::CheckCollisionsWordshipVsPlayership()
             lastDeathTime = GetTime();
             wordship.alive = false;
             playership.alive = false;
-            if ( !isValid(target_idx) )target_idx = -1;
+            if ( !isValid(target_idx) || ( isValid(target_idx) && wordship.word == wordships[target_idx].word ) )
+            {
+                target_idx = -1;
+            }
             lives--;
             return;
         }
@@ -880,6 +886,7 @@ void Game::HandleTyping()
                         Vector2 position = wordships[target_idx].shipPosition;
                         CreateMiniWordShips(position, level);
                     }
+                    target_idx = -1;
                     return;
 
                 }
@@ -939,6 +946,7 @@ void Game::HandleTyping()
                     Vector2 position = wordships[target_idx].shipPosition;
                     CreateMiniWordShips(position, level);
                 }
+                target_idx = -1;
                 return;
             }
             else

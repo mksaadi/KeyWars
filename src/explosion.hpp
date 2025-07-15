@@ -5,7 +5,7 @@
 class Explosion
 {
     public:
-    Explosion(Texture2D* texture, Vector2 pos, int frameCols = 5, int frameRows = 5, int frameSpeed = 2);
+    Explosion(Texture2D* texture, Vector2 pos, int frameCols = 5, int frameRows = 5, int frameSpeed = 1);
     void Update();
     void Draw();
 
