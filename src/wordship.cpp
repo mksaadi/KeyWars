@@ -37,9 +37,9 @@ WordShip::WordShip(Font f, Vector2 position, Texture2D image, std::string word, 
     else
     {
         this->speed = isBoss ? 0.5f : 0.2f;
-        this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
-        this->velocity.y = std::min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
     }
+    this->velocity.x = GetRandomValue(-30, 30) / 100.0f;
+    this->velocity.y = std::min(6.0f, float(speed + ( log2(level + 1) * 0.1f )));
     this->typedCount = 0;
     this->cur_target = 0;
     this->font = f;
@@ -66,12 +66,14 @@ WordShip::~WordShip()
 
 void WordShip::Draw(bool isTarget)
 {
-    if ( !alive )return;
 
+    if ( !alive )return;
     float fontSize = 30;
     float spacing = 2;
     float scale = isBoss ? 1.0f : 0.5f;
     DrawTextureEx(image, shipPosition, 0, scale, color);
+    if ( typedCount >= ( int )word.size() )return;
+
     std::string typedPart = word.substr(0, typedCount);
     std::string untypedPart = word.substr(typedCount);
 
@@ -95,6 +97,16 @@ void WordShip::Draw(bool isTarget)
 void WordShip::Move()
 {
     if ( !alive )return;
+    if ( typedCount >= ( int )word.size() && !isReadytoDestroy )
+    {
+        isReadytoDestroy = true;
+        wordDestroyedTime = GetTime();
+    }
+    if ( alive && isReadytoDestroy && ( GetTime() - wordDestroyedTime > 0.5f ) )
+    {
+        alive = false;
+        return;
+    }
     float fontSize = 30;
     float spacing = 2;
     float scale = isBoss ? 1.0f : 0.5f;
@@ -118,6 +130,7 @@ void WordShip::Move()
     if ( position.y > GetScreenHeight() )
     {
         alive = false;
+        return;
     }
     float wordWidth = GetRect().width;
     if ( position.x < 0 || position.x + wordWidth > GetScreenWidth() )
@@ -131,22 +144,25 @@ void WordShip::Move()
 
 Rectangle WordShip::GetRect()
 {
+    if ( !alive ) return{ position.x,position.y,0.0f,0.0f };
     float fontisize = 30;
     float spacing = 2;
     float padding = ( isMinionShip ? 30 : 15 );
     float width = MeasureTextEx(font, word.c_str(), 30, 2).x;
     float height = MeasureTextEx(font, word.c_str(), 30, 2).y;
-    return { position.x,position.y,width + padding,height + padding };
+    return { position.x, position.y, width + padding, height + padding };
 }
 
 Rectangle WordShip::GetImageRect()
 {
+    if ( !alive ) return{ shipPosition.x,shipPosition.y,0.0f,0.0f };
     float scale = isBoss ? 1.0f : 0.5f;
     return { shipPosition.x,shipPosition.y,image.width * scale,image.height * scale };
 }
 
 Vector2 WordShip::GetCenter()
 {
+    if ( !alive ) return{ 0.0f,0.0f };
     float scale = isBoss ? 1.0f : 0.5f;
     return { shipPosition.x + image.width * scale / 2 ,shipPosition.y + image.height * scale / 2 };
 }

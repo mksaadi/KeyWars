@@ -23,6 +23,7 @@ class Game
     void ShowResult(int yOffset);
     void ShowSettings(int x, int y);
     void ShowWords(string str, int yOffset);
+    void ShowWords(string str, Rectangle rect);
     void ShowPowerUps();
     void ShowProgressbar();
     void ActivatePowerup();
@@ -42,6 +43,7 @@ class Game
     float levelStartTime;
     float levelDelay;
     float lastDeathTime;
+    float lastWordShipDeathTime;
 
     bool assestsLoaded;
     bool canPowerUp;
@@ -52,11 +54,11 @@ class Game
     bool bossIsDead;
     int powerUps;
     int score;
+    int liveWords;
     int wordTyped;
     int timeSpentTyping;
     int typingStartTime;
-    int idleTime;
-    int lastPauseTime;
+    int lastTypedTime;
     int wpm;
     int totalKeyStrokes;
     int successfulKeyStrokes;
@@ -69,6 +71,8 @@ class Game
     int menuSelection;
     int totalMenuItems;
     int gameOverMenuItems;
+    int selectedSettingIdx;
+
     Music music;
     float musicVolume;
     Font font;
@@ -84,6 +88,7 @@ class Game
     private:
     void CheckCollisions();
     void CheckCollisionsBulletVsWordships();
+    void CheckCollisionsPowerBulletVsWordships();
     void CheckCollisionsWordshipsVsWordships();
     void CheckCollisionsWordshipVsPlayership();
     void DeleteInactiveBullets();
@@ -93,6 +98,7 @@ class Game
     void DeleteInactiveWordShips();
     void UpdateAllSoundVolumes();
     int GetTargetWordIdx(char c);
+    int GetLiveWordCount();
     bool isValid(int idx);
 
     bool isWordOutofScreen(int idx);

@@ -34,7 +34,6 @@ std::vector<Texture2D> PlayerShip::loadImages()
 
 PlayerShip::~PlayerShip()
 {
-
     for ( int i = 0; i < 4; i++ )
     {
         UnloadTexture(images[i]);
@@ -85,6 +84,7 @@ void PlayerShip::Move()
 
 char  PlayerShip::Fire()
 {
+    if ( !alive ) return '\0';
     int key = GetCharPressed();
     char cur_char = ( char )key;
     if ( key > 0 && key < 128 )
@@ -92,14 +92,13 @@ char  PlayerShip::Fire()
         return cur_char;
     }
     return '\0';
-
 }
 
 Rectangle PlayerShip::GetRect()
 {
     if ( alive )
     {
-        Rectangle rect = Rectangle { position.x,position.y,image.width,image.height };
+        Rectangle rect = Rectangle { position.x,position.y,( float )image.width,( float )image.height };
         return rect;
     }
     else

@@ -12,8 +12,20 @@ Bullet::Bullet(Texture2D bulletTexture, Vector2 startPos, WordShip* target, floa
     if ( target )
     {
         Vector2 direction = Vector2Subtract(target->GetCenter(), position);
-        velocity = Vector2Scale(Vector2Normalize(direction), speed);
+        if ( Vector2Length(direction) > 0.001f )
+        {
+            velocity = Vector2Scale(Vector2Normalize(direction), speed);
+        }
+        else
+        {
+            velocity = { 0,-speed };
+        }
     }
+    else
+    {
+        active = false;
+    }
+
 }
 
 void Bullet::Update()
@@ -24,20 +36,24 @@ void Bullet::Update()
         return;
     }
     Vector2 direction = Vector2Subtract(target->GetCenter(), position);
-    velocity = Vector2Scale(Vector2Normalize(direction), speed);
-    position = Vector2Add(position, velocity);
-    if ( position.y < 0 || position.y > GetScreenHeight() || position.x < 0 || position.x > GetScreenWidth() ) {
-        active = false;
+    if ( Vector2Length(direction) > 0.001f )
+    {
+        velocity = Vector2Scale(Vector2Normalize(direction), speed);
     }
+    else
+    {
+        velocity = { 0,-speed };
+    }
+    position = Vector2Add(position, velocity);
 }
 void Bullet::Draw()
 {
-    if ( active ) {
-        float angle = atan2f(velocity.y, velocity.x) * RAD2DEG + 90.0f;
-        float scale = ( isPowerBullet ? 3.0f : 1.0f );
-        Vector2 origin = { ( float )bulletTexture.width / 2,( float )bulletTexture.height / 2 };
-        DrawTextureEx(bulletTexture, { position.x - origin.x, position.y - origin.y }, angle, scale, WHITE);
-    }
+
+    float angle = atan2f(velocity.y, velocity.x) * RAD2DEG + 90.0f;
+    float scale = ( isPowerBullet ? 3.0f : 1.0f );
+    Vector2 origin = { ( float )bulletTexture.width / 2,( float )bulletTexture.height / 2 };
+    DrawTextureEx(bulletTexture, { position.x - origin.x, position.y - origin.y }, angle, scale, WHITE);
+
 }
 
 Rectangle Bullet::GetRect()
